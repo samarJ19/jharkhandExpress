@@ -1,20 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import {
-    Search,
-    Heart,
-    FileText,
-    Bell,
-    Share2,
-    ThumbsUp,
+import React, { useState } from "react";
+import { 
+    Search, 
+    Heart, 
+    FileText, 
+    Bell, 
+    Share2, 
+    ThumbsUp, 
     ThumbsDown,
     Plus,
     Mic,
     Send,
     MoreHorizontal,
     Star,
-    MessageCircle,
+    MessageCircle
 } from "lucide-react";
 
 export default function Chatbot() {
@@ -26,13 +26,12 @@ export default function Chatbot() {
         {
             id: 1,
             type: "bot",
-            content:
-                "Hey there! I can help you plan your trip. Just tell me where you'd like to go and what you're interested in.",
-            timestamp: new Date(),
-        },
+            content: "Hey there! I can help you plan your trip. Just tell me where you'd like to go and what you're interested in.",
+            timestamp: new Date()
+        }
     ]);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e?: React.MouseEvent | React.KeyboardEvent) => {
         e?.preventDefault();
         if (!input.trim()) return;
 
@@ -41,9 +40,9 @@ export default function Chatbot() {
             id: messages.length + 1,
             type: "user",
             content: input,
-            timestamp: new Date(),
+            timestamp: new Date()
         };
-        setMessages((prev) => [...prev, userMessage]);
+        setMessages(prev => [...prev, userMessage]);
 
         setLoading(true);
         setError("");
@@ -68,18 +67,19 @@ export default function Chatbot() {
                 id: messages.length + 2,
                 type: "bot",
                 content: itineraryText,
-                timestamp: new Date(),
+                timestamp: new Date()
             };
-            setMessages((prev) => [...prev, botMessage]);
-        } catch (err) {
+            setMessages(prev => [...prev, botMessage]);
+
+        } catch (err : any) {
             setError(err.message);
             const errorMessage = {
                 id: messages.length + 2,
                 type: "bot",
                 content: `Sorry, I couldn't process that request. Mind trying again?`,
-                timestamp: new Date(),
+                timestamp: new Date()
             };
-            setMessages((prev) => [...prev, errorMessage]);
+            setMessages(prev => [...prev, errorMessage]);
         } finally {
             setLoading(false);
             setInput("");
@@ -93,9 +93,9 @@ export default function Chatbot() {
                 <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
                     <Star className="w-6 h-6 text-white" />
                 </div>
-
+                
                 <div className="w-8 h-px bg-gray-200"></div>
-
+                
                 <div className="flex flex-col space-y-3">
                     <button className="w-10 h-10 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
                         <Search className="w-5 h-5 text-gray-600" />
@@ -118,9 +118,7 @@ export default function Chatbot() {
                 <div className="border-b border-gray-200 bg-white px-6 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
-                            <h1 className="text-xl font-semibold text-gray-900">
-                                PromptYatra
-                            </h1>
+                            <h1 className="text-xl font-semibold text-gray-900">Trip Planner Chat</h1>
                             <div className="flex items-center space-x-2">
                                 <span className="px-3 py-1 bg-black text-white text-sm rounded-full cursor-pointer">
                                     Chat
@@ -146,7 +144,7 @@ export default function Chatbot() {
                     <div className="max-w-4xl mx-auto space-y-6">
                         {messages.map((message) => (
                             <div key={message.id}>
-                                {message.type === "bot" ? (
+                                {message.type === 'bot' ? (
                                     <div className="flex items-start space-x-4">
                                         <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                                             <MessageCircle className="w-4 h-4 text-gray-600" />
@@ -159,13 +157,10 @@ export default function Chatbot() {
                                             </div>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-xs text-gray-400">
-                                                    {message.timestamp.toLocaleTimeString(
-                                                        [],
-                                                        {
-                                                            hour: "2-digit",
-                                                            minute: "2-digit",
-                                                        }
-                                                    )}
+                                                    {message.timestamp.toLocaleTimeString([], { 
+                                                        hour: '2-digit', 
+                                                        minute: '2-digit' 
+                                                    })}
                                                 </span>
                                                 <div className="flex items-center space-x-1">
                                                     <button className="p-1 hover:bg-gray-100 rounded transition-colors">
@@ -189,13 +184,10 @@ export default function Chatbot() {
                                                     {message.content}
                                                 </p>
                                                 <p className="text-xs text-gray-300 mt-2">
-                                                    {message.timestamp.toLocaleTimeString(
-                                                        [],
-                                                        {
-                                                            hour: "2-digit",
-                                                            minute: "2-digit",
-                                                        }
-                                                    )}
+                                                    {message.timestamp.toLocaleTimeString([], { 
+                                                        hour: '2-digit', 
+                                                        minute: '2-digit' 
+                                                    })}
                                                 </p>
                                             </div>
                                         </div>
@@ -214,22 +206,10 @@ export default function Chatbot() {
                                     <div className="flex items-center space-x-2">
                                         <div className="flex space-x-1">
                                             <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                                            <div
-                                                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                                                style={{
-                                                    animationDelay: "0.1s",
-                                                }}
-                                            ></div>
-                                            <div
-                                                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                                                style={{
-                                                    animationDelay: "0.2s",
-                                                }}
-                                            ></div>
+                                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                                         </div>
-                                        <span className="text-sm text-gray-500">
-                                            Thinking...
-                                        </span>
+                                        <span className="text-sm text-gray-500">Thinking...</span>
                                     </div>
                                 </div>
                             </div>
@@ -249,7 +229,7 @@ export default function Chatbot() {
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyPress={(e) => {
-                                        if (e.key === "Enter" && !e.shiftKey) {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
                                             e.preventDefault();
                                             handleSubmit(e);
                                         }
@@ -262,7 +242,7 @@ export default function Chatbot() {
                                     <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                                         <Mic className="w-4 h-4 text-gray-500" />
                                     </button>
-                                    <button
+                                    <button 
                                         onClick={handleSubmit}
                                         disabled={loading || !input.trim()}
                                         className="p-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"

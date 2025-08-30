@@ -1,324 +1,201 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from "react";
+import axios from "axios";
 
-interface LocationData {
-  lat: number;
-  lng: number;
-  placeName?: string;
-}
-
-interface MapplsLocationMarkerProps {
-  token: string;
-  defaultCenter?: [number, number];
-  defaultZoom?: number;
-  markerIconUrl?: string;
-}
-
-// Extend the Window interface to include mappls
+// Declare mappls on the window object for TypeScript
 declare global {
   interface Window {
     mappls: any;
-    initMap1?: () => void;
+    initMapCallback?: () => void;
   }
 }
 
-const MapplsLocationMarker: React.FC<MapplsLocationMarkerProps> = ({
-  token,
-  defaultCenter = [28.61, 77.23],
-  defaultZoom = 10,
-  markerIconUrl = 'https://apis.mapmyindia.com/map_v3/1.png'
-}) => {
+const MapplsLocationMarker: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<any>(null);
   const [marker, setMarker] = useState<any>(null);
-  const [locationInput, setLocationInput] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
-  const [currentLocation, setCurrentLocation] = useState<LocationData | null>(null);
+  const [locationInput, setLocationInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [mapReady, setMapReady] = useState(false);
+  // ✅ Get token from backend instead of frontend
+  const fetchToken = async (): Promise<string> => {
+    const res = await axios.get("http://localhost:5000/api/get-mappls-token");
+    return res.data.access_token;
+  };
 
-  // Initialize map
+ // Effect to initialize the map
   useEffect(() => {
     let scriptElement: HTMLScriptElement | null = null;
-    let pluginScriptElement: HTMLScriptElement | null = null;
+    let initTimeout: NodeJS.Timeout;
 
-    const initializeMap = () => {
-      console.log('Initializing map...');
-      if (mapRef.current && window.mappls) {
-        try {
-          const mapInstance = new window.mappls.Map(mapRef.current, {
-            center: defaultCenter,
-            zoomControl: true,
-            location: true,
-            zoom: defaultZoom
-          });
-          console.log('Map created successfully');
-          setMap(mapInstance);
-        } catch (error) {
-          console.error('Error creating map:', error);
-          setError('Failed to initialize map');
-        }
-      } else {
-        console.log('Map container or mappls not available');
+    const initMap = async () => {
+      try {
+        const token = await fetchToken();
+      
+        // Define the callback function that the Mappls script will call
+        window.initMapCallback = () => {
+          initTimeout = setTimeout(() => {
+            if (mapRef.current && window.mappls) {
+              try {
+                const mapInstance = new window.mappls.Map(mapRef.current, {
+                center: [28.61, 77.23],// Note: [longitude, latitude]
+                  zoomControl: true,
+                  location: true,
+                });
+                
+                setMap(mapInstance);
+                setMapReady(true); // Set map as ready
+                setError("");
+              } catch (mapError) {
+                console.error("Map initialization error:", mapError);
+                setError("Failed to initialize map: " + (mapError as Error).message);
+              }
+            } else {
+              setError("Map container or Mappls SDK not available.");
+            }
+          }, 100); // A small delay can help ensure the DOM is fully ready
+        };
+
+        // Create and append the Mappls SDK script to the document head
+        scriptElement = document.createElement("script");
+        scriptElement.src = `https://apis.mappls.com/advancedmaps/api/${token}/map_sdk?layer=vector&v=3.0&callback=initMapCallback`;
+        scriptElement.async = true;
+        scriptElement.onerror = () => setError("Failed to load Mappls SDK.");
+        document.head.appendChild(scriptElement);
+      } catch (err) {
+        console.error("Token fetch error:", err);
+        setError("Authentication failed. Check if your backend is running.");
       }
     };
 
-    // Load Mappls SDK
-    const loadMapplsSDK = () => {
-      // Check if mappls is already loaded
-      if (window.mappls) {
-        console.log('Mappls already loaded');
-        initializeMap();
-        return;
-      }
+    initMap();
 
-      // Set up the global callback function
-      window.initMap1 = () => {
-        console.log('Mappls SDK loaded, initializing map');
-        initializeMap();
-      };
-
-      console.log('Loading Mappls SDK...');
-      
-      // Load main SDK
-      scriptElement = document.createElement('script');
-      scriptElement.src = `https://apis.mappls.com/advancedmaps/api/${token}/map_sdk?layer=vector&v=3.0&callback=initMap1`;
-      scriptElement.defer = true;
-      scriptElement.async = true;
-      
-      scriptElement.onerror = () => {
-        console.error('Failed to load Mappls SDK');
-        setError('Failed to load map SDK. Please check your token.');
-      };
-      
-      document.head.appendChild(scriptElement);
-
-      // Load plugins after a short delay
-      setTimeout(() => {
-        pluginScriptElement = document.createElement('script');
-        pluginScriptElement.src = `https://apis.mappls.com/advancedmaps/api/${token}/map_sdk_plugins?v=3.0`;
-        pluginScriptElement.defer = true;
-        pluginScriptElement.async = true;
-        document.head.appendChild(pluginScriptElement);
-      }, 1000);
-    };
-
-    loadMapplsSDK();
-
-    // Cleanup function
+    // Cleanup function to remove the script and callback
     return () => {
-      if (scriptElement && document.head.contains(scriptElement)) {
+      if (initTimeout) clearTimeout(initTimeout);
+      if (scriptElement && scriptElement.parentNode) {
         document.head.removeChild(scriptElement);
       }
-      if (pluginScriptElement && document.head.contains(pluginScriptElement)) {
-        document.head.removeChild(pluginScriptElement);
-      }
-      // Clean up global callback
-      if (window.initMap1) {
-        delete window.initMap1;
-      }
+      delete window.initMapCallback;
     };
-  }, [token, defaultCenter, defaultZoom]);
+  }, []); // Empty dependency array ensures this runs only once on mount
 
-  // Function to search for location and place marker
-  const searchAndPlaceMarker = async () => {
-    if (!locationInput.trim() || !map) {
-      setError('Please enter a location name and ensure map is loaded');
-      return;
-    }
+  // Function to handle the location search and marker placement
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!map || !mapReady || !locationInput.trim()) return;
 
     setIsLoading(true);
-    setError('');
+    setError("");
 
-    try {
-      // For now, let's use a simple approach with place search
-      // You might need to adjust this based on your Mappls API access
-      
-      // Alternative: Use geocoding if available
-      if (window.mappls && window.mappls.search) {
-        window.mappls.search({
-          query: locationInput,
-          region: 'IND'
-        }, (data: any) => {
-          console.log('Search results:', data);
-          if (data && data.length > 0) {
-            const place = data[0];
-            const coordinates = {
-              lat: parseFloat(place.latitude || place.lat || place.entryLatitude),
-              lng: parseFloat(place.longitude || place.lng || place.entryLongitude),
-              placeName: place.placeName || place.place_name || place.placeAddress || locationInput
-            };
-            
-            if (!isNaN(coordinates.lat) && !isNaN(coordinates.lng)) {
-              setCurrentLocation(coordinates);
-              placeMarkerOnMap(coordinates);
-            } else {
-              setError('Invalid coordinates received for the location');
-            }
-          } else {
-            setError('Location not found. Please try a different search term.');
-          }
-          setIsLoading(false);
-        }, (error: any) => {
-          console.error('Search error:', error);
-          setError('Failed to search location. Please try again.');
-          setIsLoading(false);
-        });
-      } else {
-        // Fallback: Use some default locations for testing
-        const testLocations: { [key: string]: LocationData } = {
-          'delhi': { lat: 28.6139, lng: 77.2090, placeName: 'New Delhi' },
-          'mumbai': { lat: 19.0760, lng: 72.8777, placeName: 'Mumbai' },
-          'bangalore': { lat: 12.9716, lng: 77.5946, placeName: 'Bangalore' },
-          'chennai': { lat: 13.0827, lng: 80.2707, placeName: 'Chennai' },
-          'kolkata': { lat: 22.5726, lng: 88.3639, placeName: 'Kolkata' }
-        };
-        
-        const searchKey = locationInput.toLowerCase();
-        const foundLocation = testLocations[searchKey] || 
-                             Object.values(testLocations).find(loc => 
-                               loc.placeName?.toLowerCase().includes(searchKey)
-                             );
-        
-        if (foundLocation) {
-          setCurrentLocation(foundLocation);
-          placeMarkerOnMap(foundLocation);
-        } else {
-          setError('Search API not available. Try: Delhi, Mumbai, Bangalore, Chennai, or Kolkata');
-        }
-        setIsLoading(false);
+    // Hardcoded locations for the example
+    const locations: Record<string, { lat: number; lng: number; placeName: string }> = {
+      delhi: { lat: 28.6139, lng: 77.209, placeName: "New Delhi" },
+      mumbai: { lat: 19.076, lng: 72.8777, placeName: "Mumbai" },
+      bangalore: { lat: 12.9716, lng: 77.5946, placeName: "Bangalore" },
+      chennai: { lat: 13.0827, lng: 80.2707, placeName: "Chennai" },
+    };
+
+    // Find the location from user input
+    const key = locationInput.toLowerCase();
+    const location =
+      locations[key] ||
+      Object.values(locations).find((loc) =>
+        loc.placeName.toLowerCase().includes(key)
+      );
+
+    if (location) {
+      // Remove the existing marker if there is one
+      if (marker) {
+        marker.remove();
       }
 
-    } catch (err) {
-      console.error('Error searching location:', err);
-      setError('An error occurred while searching. Please try again.');
-      setIsLoading(false);
+      // Create a new marker
+      const newMarker = new window.mappls.Marker({
+        map: map,
+        // ✅ FIX: Pass a clean object with lat and lng to the position property
+        position: { lat: location.lat, lng: location.lng },
+        fitbounds: true, // This can also help in fitting the map to the marker
+      });
+      setMarker(newMarker);
+
+      // ✅ FIX: Use flyTo for a smooth animation and provide coordinates
+      // in the correct [longitude, latitude] order.
+      map.flyTo({
+        center: [location.lng, location.lat], // Correct order: [longitude, latitude]
+        zoom: 12, // Zoom in to a reasonable level
+        speed: 1.5,
+      });
+
+    } else {
+      setError("Location not found. Try: Delhi, Mumbai, Bangalore, or Chennai");
     }
-  };
 
-  // Function to place marker on map
-  const placeMarkerOnMap = (location: LocationData) => {
-    if (!map) return;
-
-    // Remove existing marker if any
-    if (marker) {
-      marker.remove();
-    }
-
-    // Create new marker
-    const newMarker = new window.mappls.Marker({
-      map: map,
-      position: {
-        lat: location.lat,
-        lng: location.lng
-      },
-      fitbounds: true,
-      icon_url: markerIconUrl
-    });
-
-    setMarker(newMarker);
-
-    // Center map on the new location
-    map.setCenter([location.lat, location.lng]);
-    map.setZoom(15);
-  };
-
-  // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    searchAndPlaceMarker();
+    setIsLoading(false);
   };
 
   return (
-    <div style={{ width: '100%', height: '100vh', position: 'relative' }}>
-      {/* Search Input Overlay */}
-      <div style={{
-        position: 'absolute',
-        top: '20px',
-        left: '20px',
-        right: '20px',
-        zIndex: 1000,
-        backgroundColor: 'white',
-        padding: '15px',
-        borderRadius: '8px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-        maxWidth: '400px'
-      }}>
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '10px' }}>
-            <input
-              type="text"
-              value={locationInput}
-              onChange={(e) => setLocationInput(e.target.value)}
-              placeholder="Enter location name (e.g., New Delhi, Mumbai)"
-              style={{
-                width: '100%',
-                padding: '10px',
-                border: '1px solid #ddd',
+    <div style={{ width: "100%", height: "100vh", position: "relative", fontFamily: 'sans-serif' }}>
+      {/* Search Box UI */}
+      <div
+        style={{
+          position: "absolute",
+          top: 20,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 1000,
+          background: "white",
+          padding: "1rem",
+          borderRadius: "8px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+          width: "90%",
+          maxWidth: "320px",
+        }}
+      >
+        <h2 style={{margin: '0 0 1rem 0', fontSize: '1.2rem', color: '#333'}}>Find a Location</h2>
+        <form onSubmit={handleSearch}>
+          <input
+            type="text"
+            value={locationInput}
+            onChange={(e) => setLocationInput(e.target.value)}
+            placeholder="e.g., Delhi, Mumbai..."
+            style={{ 
+                width: "100%", 
+                padding: "0.75rem", 
+                marginBottom: "0.75rem", 
+                boxSizing: "border-box",
+                border: '1px solid #ccc',
                 borderRadius: '4px',
-                fontSize: '14px'
-              }}
-              disabled={isLoading}
-            />
-          </div>
+                fontSize: '1rem'
+            }}
+          />
           <button
             type="submit"
-            disabled={isLoading || !locationInput.trim()}
+            disabled={isLoading || !mapReady}
             style={{
-              width: '100%',
-              padding: '10px',
-              backgroundColor: isLoading ? '#ccc' : '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: isLoading ? 'not-allowed' : 'pointer',
-              fontSize: '14px'
+              width: "100%",
+              padding: "0.75rem",
+              background: isLoading || !mapReady ? "#ccc" : "#007bff",
+              color: "#fff",
+              border: "none",
+              borderRadius: "4px",
+              cursor: isLoading || !mapReady ? "not-allowed" : "pointer",
+              fontSize: '1rem',
+              fontWeight: 'bold'
             }}
           >
-            {isLoading ? 'Searching...' : 'Search & Place Marker'}
+            {isLoading ? "Searching..." : mapReady ? "Place Marker" : "Loading Map..."}
           </button>
         </form>
-
-        {/* Error Message */}
         {error && (
-          <div style={{
-            marginTop: '10px',
-            padding: '8px',
-            backgroundColor: '#fee',
-            color: '#c33',
-            borderRadius: '4px',
-            fontSize: '12px'
-          }}>
+          <div style={{ marginTop: "0.75rem", color: "#d9534f", fontSize: "0.875rem", textAlign: 'center' }}>
             {error}
-          </div>
-        )}
-
-        {/* Current Location Info */}
-        {currentLocation && (
-          <div style={{
-            marginTop: '10px',
-            padding: '8px',
-            backgroundColor: '#e8f5e8',
-            color: '#2d5a2d',
-            borderRadius: '4px',
-            fontSize: '12px'
-          }}>
-            <strong>Current Location:</strong><br />
-            {currentLocation.placeName}<br />
-            Lat: {currentLocation.lat.toFixed(6)}, Lng: {currentLocation.lng.toFixed(6)}
           </div>
         )}
       </div>
 
       {/* Map Container */}
-      <div
-        ref={mapRef}
-        id="map"
-        style={{
-          width: '100%',
-          height: '100%',
-          margin: 0,
-          padding: 0
-        }}
-      />
+      <div ref={mapRef} id="mappls-map-container" />
     </div>
   );
 };
