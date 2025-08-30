@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import axios, { AxiosError } from "axios";
 import dotenv from "dotenv";
 import cors from "cors";
-
+import { PassThrough } from "stream";
 dotenv.config();
 const allowedOrigins = ['http://localhost:5173']
 const corsOptions = {
@@ -14,7 +14,6 @@ const corsOptions = {
     }
   }
 };
-
 
 const app = express();
 app.use(cors(corsOptions))
@@ -70,7 +69,33 @@ app.get("/api/get-directions", async (req: Request, res: Response) => {
   }
 });
 
+app.post("/stream-itinerary", async (req: Request, res: Response) => {
+    try {
+        let body = "";
+        req.on("data", (chunk) => {
+            body += chunk;
+        });
+        req.on("end", async () => {
+            const { user_prompt } = JSON.parse(body);
 
+            const apiRes = await axios({
+                method: "POST",
+                url: "https://0e1cd13a436e.ngrok-free.app/stream-itinerary",
+                headers: {
+                    accept: "application/json",
+                    "Content-Type": "application/json",
+                },
+                data: { user_prompt },
+                responseType: "stream",
+            });
+
+            res.setHeader("Content-Type", "application/json");
+            apiRes.data.pipe(res);
+        });
+    } catch (err) {
+        res.status(500).json({ error: "Failed to stream itinerary." });
+    }
+});
 
 app.listen(5000, () => {
   console.log("✅ Server running on http://localhost:5000");

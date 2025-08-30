@@ -1,36 +1,38 @@
-
-
 import React, { useState } from "react";
-import { 
-    Search, 
-    Heart, 
-    FileText, 
-    Bell, 
-    Share2, 
-    ThumbsUp, 
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
+import {
+    Search,
+    Heart,
+    FileText,
+    Bell,
+    Share2,
+    ThumbsUp,
     ThumbsDown,
     Plus,
     Mic,
     Send,
     MoreHorizontal,
     Star,
-    MessageCircle
+    MessageCircle,
 } from "lucide-react";
 
 export default function Chatbot() {
     const [input, setInput] = useState("");
-    const [itinerary, setItinerary] = useState(""); // only store itinerary
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [messages, setMessages] = useState([
         {
             id: 1,
             type: "bot",
-            content: "Hey there! I can help you plan your trip. Just tell me where you'd like to go and what you're interested in.",
-            timestamp: new Date()
-        }
+            content:
+                "Hey there! I can help you plan your trip. Just tell me where you'd like to go and what you're interested in.",
+            timestamp: new Date(),
+        },
     ]);
 
+    // Streaming itinerary from backend
     const handleSubmit = async (e?: React.MouseEvent | React.KeyboardEvent) => {
         e?.preventDefault();
         if (!input.trim()) return;
@@ -40,46 +42,84 @@ export default function Chatbot() {
             id: messages.length + 1,
             type: "user",
             content: input,
-            timestamp: new Date()
+            timestamp: new Date(),
         };
-        setMessages(prev => [...prev, userMessage]);
-
+        setMessages((prev) => [...prev, userMessage]);
         setLoading(true);
         setError("");
 
         try {
-            const res = await fetch("https://your-teammates-api.com/chat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt: input }), // sending user input
+            const response = await fetch(
+                "http://localhost:5000/stream-itinerary",
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ user_prompt: input }),
+                }
+            );
+
+            if (!response.body) throw new Error("No response body");
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let done = false;
+            let botContent = "";
+
+            // Add a placeholder bot message for streaming
+            setMessages((prev) => [
+                ...prev,
+                {
+                    id: prev.length + 1,
+                    type: "bot",
+                    content: "",
+                    timestamp: new Date(),
+                },
+            ]);
+
+            while (!done) {
+                const { value, done: doneReading } = await reader.read();
+                done = doneReading;
+                if (value) {
+                    botContent += decoder.decode(value);
+                    // Update the last bot message with streamed content
+                    setMessages((prev) => {
+                        const updated = [...prev];
+                        const lastIdx = updated.length - 1;
+                        if (updated[lastIdx].type === "bot") {
+                            updated[lastIdx] = {
+                                ...updated[lastIdx],
+                                content: botContent,
+                            };
+                        }
+                        return updated;
+                    });
+                }
+            }
+
+            // Finalize bot message after streaming
+            setMessages((prev) => {
+                const updated = [...prev];
+                const lastIdx = updated.length - 1;
+                if (updated[lastIdx].type === "bot") {
+                    updated[lastIdx] = {
+                        ...updated[lastIdx],
+                        content: botContent || "No itinerary received.",
+                        timestamp: new Date(),
+                    };
+                }
+                return updated;
             });
-
-            if (!res.ok) throw new Error("API request failed");
-
-            const data = await res.json();
-            // expected: { itinerary: "Trip plan here...", places: ["Delhi","Goa"] }
-
-            const itineraryText = data.itinerary || "No itinerary received.";
-            setItinerary(itineraryText);
-
-            // Add bot response to chat
-            const botMessage = {
-                id: messages.length + 2,
-                type: "bot",
-                content: itineraryText,
-                timestamp: new Date()
-            };
-            setMessages(prev => [...prev, botMessage]);
-
-        } catch (err : any) {
+        } catch (err: any) {
             setError(err.message);
-            const errorMessage = {
-                id: messages.length + 2,
-                type: "bot",
-                content: `Sorry, I couldn't process that request. Mind trying again?`,
-                timestamp: new Date()
-            };
-            setMessages(prev => [...prev, errorMessage]);
+            setMessages((prev) => [
+                ...prev,
+                {
+                    id: prev.length + 1,
+                    type: "bot",
+                    content: `Sorry, I couldn't process that request. Mind trying again?`,
+                    timestamp: new Date(),
+                },
+            ]);
         } finally {
             setLoading(false);
             setInput("");
@@ -93,9 +133,7 @@ export default function Chatbot() {
                 <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
                     <Star className="w-6 h-6 text-white" />
                 </div>
-                
                 <div className="w-8 h-px bg-gray-200"></div>
-                
                 <div className="flex flex-col space-y-3">
                     <button className="w-10 h-10 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
                         <Search className="w-5 h-5 text-gray-600" />
@@ -118,15 +156,9 @@ export default function Chatbot() {
                 <div className="border-b border-gray-200 bg-white px-6 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
-                            <h1 className="text-xl font-semibold text-gray-900">Trip Planner Chat</h1>
-                            <div className="flex items-center space-x-2">
-                                <span className="px-3 py-1 bg-black text-white text-sm rounded-full cursor-pointer">
-                                    Chat
-                                </span>
-                                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm rounded-full cursor-pointer hover:bg-gray-200">
-                                    Search
-                                </span>
-                            </div>
+                            <h1 className="text-xl font-semibold text-gray-900">
+                                Trip Planner Chat
+                            </h1>
                         </div>
                         <div className="flex items-center space-x-2">
                             <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -144,23 +176,152 @@ export default function Chatbot() {
                     <div className="max-w-4xl mx-auto space-y-6">
                         {messages.map((message) => (
                             <div key={message.id}>
-                                {message.type === 'bot' ? (
+                                {message.type === "bot" ? (
                                     <div className="flex items-start space-x-4">
                                         <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                                             <MessageCircle className="w-4 h-4 text-gray-600" />
                                         </div>
                                         <div className="flex-1 space-y-2">
                                             <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                                                <p className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+                                                {/* Enhanced Markdown rendering */}
+                                                <ReactMarkdown
+                                                    remarkPlugins={[remarkGfm]}
+                                                    rehypePlugins={[
+                                                        rehypeHighlight,
+                                                    ]}
+                                                    components={{
+                                                        h1: ({
+                                                            node,
+                                                            ...props
+                                                        }) => (
+                                                            <h1
+                                                                className="text-2xl font-bold mt-4 mb-2"
+                                                                {...props}
+                                                            />
+                                                        ),
+                                                        h2: ({
+                                                            node,
+                                                            ...props
+                                                        }) => (
+                                                            <h2
+                                                                className="text-xl font-semibold mt-4 mb-2"
+                                                                {...props}
+                                                            />
+                                                        ),
+                                                        h3: ({
+                                                            node,
+                                                            ...props
+                                                        }) => (
+                                                            <h3
+                                                                className="text-lg font-semibold mt-3 mb-1"
+                                                                {...props}
+                                                            />
+                                                        ),
+                                                        p: ({
+                                                            node,
+                                                            ...props
+                                                        }) => (
+                                                            <p
+                                                                className="mb-2"
+                                                                {...props}
+                                                            />
+                                                        ),
+                                                        ul: ({
+                                                            node,
+                                                            ...props
+                                                        }) => (
+                                                            <ul
+                                                                className="list-disc ml-6 mb-2"
+                                                                {...props}
+                                                            />
+                                                        ),
+                                                        ol: ({
+                                                            node,
+                                                            ...props
+                                                        }) => (
+                                                            <ol
+                                                                className="list-decimal ml-6 mb-2"
+                                                                {...props}
+                                                            />
+                                                        ),
+                                                        li: ({
+                                                            node,
+                                                            ...props
+                                                        }) => (
+                                                            <li
+                                                                className="mb-1"
+                                                                {...props}
+                                                            />
+                                                        ),
+                                                        table: ({
+                                                            node,
+                                                            ...props
+                                                        }) => (
+                                                            <table
+                                                                className="min-w-full border border-gray-200 my-2"
+                                                                {...props}
+                                                            />
+                                                        ),
+                                                        th: ({
+                                                            node,
+                                                            ...props
+                                                        }) => (
+                                                            <th
+                                                                className="border px-2 py-1 bg-gray-100"
+                                                                {...props}
+                                                            />
+                                                        ),
+                                                        td: ({
+                                                            node,
+                                                            ...props
+                                                        }) => (
+                                                            <td
+                                                                className="border px-2 py-1"
+                                                                {...props}
+                                                            />
+                                                        ),
+                                                        code: ({
+                                                            node,
+                                                            inline,
+                                                            className,
+                                                            children,
+                                                            ...props
+                                                        }) =>
+                                                            inline ? (
+                                                                <code
+                                                                    className="bg-gray-100 rounded px-1 py-0.5 font-mono text-sm"
+                                                                    {...props}
+                                                                >
+                                                                    {children}
+                                                                </code>
+                                                            ) : (
+                                                                <pre className="bg-gray-900 text-white rounded p-3 overflow-x-auto my-2">
+                                                                    <code
+                                                                        className={
+                                                                            className
+                                                                        }
+                                                                        {...props}
+                                                                    >
+                                                                        {
+                                                                            children
+                                                                        }
+                                                                    </code>
+                                                                </pre>
+                                                            ),
+                                                    }}
+                                                >
                                                     {message.content}
-                                                </p>
+                                                </ReactMarkdown>
                                             </div>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-xs text-gray-400">
-                                                    {message.timestamp.toLocaleTimeString([], { 
-                                                        hour: '2-digit', 
-                                                        minute: '2-digit' 
-                                                    })}
+                                                    {message.timestamp.toLocaleTimeString(
+                                                        [],
+                                                        {
+                                                            hour: "2-digit",
+                                                            minute: "2-digit",
+                                                        }
+                                                    )}
                                                 </span>
                                                 <div className="flex items-center space-x-1">
                                                     <button className="p-1 hover:bg-gray-100 rounded transition-colors">
@@ -184,10 +345,13 @@ export default function Chatbot() {
                                                     {message.content}
                                                 </p>
                                                 <p className="text-xs text-gray-300 mt-2">
-                                                    {message.timestamp.toLocaleTimeString([], { 
-                                                        hour: '2-digit', 
-                                                        minute: '2-digit' 
-                                                    })}
+                                                    {message.timestamp.toLocaleTimeString(
+                                                        [],
+                                                        {
+                                                            hour: "2-digit",
+                                                            minute: "2-digit",
+                                                        }
+                                                    )}
                                                 </p>
                                             </div>
                                         </div>
@@ -206,10 +370,22 @@ export default function Chatbot() {
                                     <div className="flex items-center space-x-2">
                                         <div className="flex space-x-1">
                                             <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                                            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                                            <div
+                                                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                                                style={{
+                                                    animationDelay: "0.1s",
+                                                }}
+                                            ></div>
+                                            <div
+                                                className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                                                style={{
+                                                    animationDelay: "0.2s",
+                                                }}
+                                            ></div>
                                         </div>
-                                        <span className="text-sm text-gray-500">Thinking...</span>
+                                        <span className="text-sm text-gray-500">
+                                            Thinking...
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -229,7 +405,7 @@ export default function Chatbot() {
                                     value={input}
                                     onChange={(e) => setInput(e.target.value)}
                                     onKeyPress={(e) => {
-                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                        if (e.key === "Enter" && !e.shiftKey) {
                                             e.preventDefault();
                                             handleSubmit(e);
                                         }
@@ -242,7 +418,7 @@ export default function Chatbot() {
                                     <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                                         <Mic className="w-4 h-4 text-gray-500" />
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={handleSubmit}
                                         disabled={loading || !input.trim()}
                                         className="p-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
