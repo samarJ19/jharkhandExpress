@@ -8,6 +8,21 @@ declare global {
   }
 }
 
+interface Geocode {
+  place: string;
+  lat: string | null;
+  lon: string | null;
+}
+
+interface LocationData {
+  status: boolean;
+  message: string;
+  data: {
+    poi: string[];
+    geocodes: Geocode[];
+  };
+}
+
 interface Location {
   name: string;
   lat: number;
@@ -15,28 +30,43 @@ interface Location {
   description?: string;
 }
 
-const MapplsMultipleMarkers: React.FC = () => {
+interface MapplsMultipleMarkersProps {
+  locationData: LocationData;
+}
+
+const MapplsMultipleMarkers: React.FC<MapplsMultipleMarkersProps> = ({ locationData }) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<any>(null);
+  const mapInstanceRef = useRef<any>(null);
   const [markers, setMarkers] = useState<any>(null);
-  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [mapReady, setMapReady] = useState(false);
   
-  // Sample locations data
-  const availableLocations: Location[] = [
-    { name: "delhi", lat: 28.549511, lng: 77.2678250, description: "National Capital Territory of Delhi" },
-    { name: "noida", lat: 28.544, lng: 77.5454, description: "Planned city in Uttar Pradesh" },
-    { name: "faridabad", lat: 28.27189158, lng: 77.2158203125, description: "Industrial city in Haryana" },
-    { name: "mumbai", lat: 19.076, lng: 72.8777, description: "Financial capital of India" },
-    { name: "bangalore", lat: 12.9716, lng: 77.5946, description: "Silicon Valley of India" },
-    { name: "chennai", lat: 13.0827, lng: 80.2707, description: "Detroit of India" },
-    { name: "pune", lat: 18.5204, lng: 73.8567, description: "Oxford of the East" },
-    { name: "hyderabad", lat: 17.3850, lng: 78.4867, description: "City of Pearls" },
-  ];
+  // Convert the prop data to our internal Location format
+  const availableLocations: Location[] = React.useMemo(() => {
+    if (!locationData?.data?.geocodes) return [];
+    
+    return locationData.data.geocodes
+      .filter(geocode => geocode.lat !== null && geocode.lon !== null) // Only include locations with valid coordinates
+      .map(geocode => ({
+        name: geocode.place,
+        lat: parseFloat(geocode.lat!),
+        lng: parseFloat(geocode.lon!),
+        description: `Point of Interest in ${geocode.place.split(', ').pop()}` // Extract city/country as description
+      }));
+  }, [locationData]);
 
-  // ✅ Get token from backend instead of frontend
+  // Calculate map center based on available locations
+  const getMapCenter = () => {
+    if (availableLocations.length === 0) return [28.61, 77.23]; // Default Delhi coordinates
+    
+    const avgLat = availableLocations.reduce((sum, loc) => sum + loc.lat, 0) / availableLocations.length;
+    const avgLng = availableLocations.reduce((sum, loc) => sum + loc.lng, 0) / availableLocations.length;
+    
+    return [avgLng, avgLat]; // [longitude, latitude] for Mappls
+  };
+
+  // âœ… Get token from backend instead of frontend
   const fetchToken = async (): Promise<string> => {
     const res = await fetch("http://localhost:5000/api/get-mappls-token");
     const data = await res.json();
@@ -45,6 +75,11 @@ const MapplsMultipleMarkers: React.FC = () => {
 
   // Effect to initialize the map
   useEffect(() => {
+    if (availableLocations.length === 0) {
+      setError("No valid locations with coordinates found in the provided data.");
+      return;
+    }
+
     let scriptElement: HTMLScriptElement | null = null;
     let initTimeout: NodeJS.Timeout;
 
@@ -52,21 +87,39 @@ const MapplsMultipleMarkers: React.FC = () => {
       try {
         const token = await fetchToken();
       
-        // Define the callback function that the Mappls script will call
         window.initMapCallback = () => {
+          // Use a longer timeout to ensure Mappls library is fully loaded
           initTimeout = setTimeout(() => {
             if (mapRef.current && window.mappls) {
               try {
                 const mapInstance = new window.mappls.Map(mapRef.current, {
-                  center: [28.61, 77.23], // [longitude, latitude]
+                  center: getMapCenter(),
                   zoomControl: true,
                   location: true,
-                  zoom: 6, // Lower zoom to show multiple cities
+                  zoom: availableLocations.length <= 1 ? 12 : 5,
                 });
-                
-                setMap(mapInstance);
-                setMapReady(true);
-                setError("");
+
+                mapInstanceRef.current = mapInstance;
+
+                // Wait for map to be fully loaded before placing markers
+                if (mapInstance && typeof mapInstance.on === 'function') {
+                  mapInstance.on("load", () => {
+                    setMapReady(true);
+                    setError("");
+                    // Place markers after map is fully loaded
+                    setTimeout(() => {
+                      placeAllMarkers();
+                    }, 500); // Additional delay to ensure map is ready
+                  });
+                  
+                  mapInstance.on('error', (e: any) => {
+                    console.error("Map error:", e);
+                    setError(`Map error: ${e.error?.message || 'Unknown map error'}`);
+                  });
+                } else {
+                  throw new Error("Mappls map object is invalid or not fully initialized.");
+                }
+
               } catch (mapError) {
                 console.error("Map initialization error:", mapError);
                 setError("Failed to initialize map: " + (mapError as Error).message);
@@ -74,15 +127,16 @@ const MapplsMultipleMarkers: React.FC = () => {
             } else {
               setError("Map container or Mappls SDK not available.");
             }
-          }, 100);
+          }, 500); // Increased timeout to 500ms
         };
 
-        // Create and append the Mappls SDK script
         scriptElement = document.createElement("script");
         scriptElement.src = `https://apis.mappls.com/advancedmaps/api/${token}/map_sdk?layer=vector&v=3.0&callback=initMapCallback`;
         scriptElement.async = true;
+        scriptElement.defer = true;
         scriptElement.onerror = () => setError("Failed to load Mappls SDK.");
         document.head.appendChild(scriptElement);
+
       } catch (err) {
         console.error("Token fetch error:", err);
         setError("Authentication failed. Check if your backend is running.");
@@ -93,26 +147,31 @@ const MapplsMultipleMarkers: React.FC = () => {
 
     return () => {
       if (initTimeout) clearTimeout(initTimeout);
+      if (mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.remove();
+        } catch (e) {
+          console.warn("Error removing map:", e);
+        }
+        mapInstanceRef.current = null;
+      }
       if (scriptElement && scriptElement.parentNode) {
         document.head.removeChild(scriptElement);
       }
       delete window.initMapCallback;
     };
-  }, []);
+  }, [locationData]); // React to locationData changes
 
-  // Function to create GeoJSON data from selected locations
-  const createGeoJsonData = (locationNames: string[]) => {
-    const features = locationNames.map(name => {
-      const location = availableLocations.find(loc => loc.name === name);
-      if (!location) return null;
-
+  // Function to create GeoJSON data from all available locations
+  const createGeoJsonData = () => {
+    const features = availableLocations.map(location => {
       return {
         type: "Feature",
         properties: {
-          htmlPopup: `<div style="padding: 8px; font-family: sans-serif;">
-                        <h3 style="margin: 0 0 4px 0; color: #333; font-size: 14px; text-transform: capitalize;">${location.name}</h3>
-                        <p style="margin: 0; color: #666; font-size: 12px;">${location.description || ''}</p>
-                        <small style="color: #999; font-size: 10px;">Lat: ${location.lat.toFixed(4)}, Lng: ${location.lng.toFixed(4)}</small>
+          htmlPopup: `<div style="padding: 8px; font-family: sans-serif; max-width: 250px;">
+                        <h3 style="margin: 0 0 4px 0; color: #333; font-size: 14px; line-height: 1.2;">${location.name}</h3>
+                        <p style="margin: 0; color: #666; font-size: 12px; line-height: 1.3;">${location.description || ''}</p>
+                        <small style="color: #999; font-size: 10px;">Lat: ${location.lat.toFixed(6)}, Lng: ${location.lng.toFixed(6)}</small>
                       </div>`
         },
         geometry: {
@@ -120,7 +179,7 @@ const MapplsMultipleMarkers: React.FC = () => {
           coordinates: [location.lat, location.lng] // [latitude, longitude] for Mappls
         }
       };
-    }).filter(Boolean);
+    });
 
     return {
       type: "FeatureCollection",
@@ -128,20 +187,13 @@ const MapplsMultipleMarkers: React.FC = () => {
     };
   };
 
-  // Function to handle checkbox changes
-  const handleLocationToggle = (locationName: string) => {
-    setSelectedLocations(prev => {
-      if (prev.includes(locationName)) {
-        return prev.filter(name => name !== locationName);
-      } else {
-        return [...prev, locationName];
-      }
-    });
-  };
-
-  // Function to place multiple markers
-  const handlePlaceMarkers = () => {
-    if (!map || !mapReady || selectedLocations.length === 0) return;
+  // Function to place all markers automatically
+  const placeAllMarkers = () => {
+    const mapInstance = mapInstanceRef.current;
+    if (!mapInstance || availableLocations.length === 0) {
+      console.warn("Cannot place markers: map not ready or no locations available");
+      return;
+    }
 
     setIsLoading(true);
     setError("");
@@ -152,12 +204,11 @@ const MapplsMultipleMarkers: React.FC = () => {
         markers.remove();
       }
 
-      // Create GeoJSON data
-      const geoData = createGeoJsonData(selectedLocations);
+      const geoData = createGeoJsonData();
+      console.log("Placing markers with data:", geoData);
 
-      // Create multiple markers using GeoJSON
       const newMarkers = new window.mappls.Marker({
-        map: map,
+        map: mapInstance,
         position: geoData,
         icon_url: 'https://apis.mapmyindia.com/map_v3/1.png',
         clusters: true,
@@ -172,26 +223,57 @@ const MapplsMultipleMarkers: React.FC = () => {
       });
 
       setMarkers(newMarkers);
+      console.log("Markers placed successfully");
     } catch (err) {
       console.error("Error placing markers:", err);
       setError("Failed to place markers: " + (err as Error).message);
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
-  // Function to clear all markers
-  const handleClearMarkers = () => {
-    if (markers) {
-      markers.remove();
-      setMarkers(null);
-    }
-    setSelectedLocations([]);
-  };
+  // Show loading or error state if no data
+  if (!locationData || !locationData.data) {
+    return (
+      <div style={{ 
+        width: "100%", 
+        height: "100vh", 
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "center",
+        fontFamily: 'sans-serif' 
+      }}>
+        <div style={{ textAlign: "center", color: "#666" }}>
+          <h2>No location data provided</h2>
+          <p>Please provide location data with valid geocodes to display the map.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (availableLocations.length === 0) {
+    return (
+      <div style={{ 
+        width: "100%", 
+        height: "100vh", 
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "center",
+        fontFamily: 'sans-serif' 
+      }}>
+        <div style={{ textAlign: "center", color: "#666" }}>
+          <h2>No valid locations found</h2>
+          <p>No locations with valid coordinates were found in the provided data.</p>
+          <p>Total locations: {locationData.data.geocodes.length}</p>
+          <p>Valid locations: {availableLocations.length}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ width: "100%", height: "100vh", position: "relative", fontFamily: 'sans-serif' }}>
-      {/* Control Panel */}
+      {/* Info Panel */}
       <div
         style={{
           position: "absolute",
@@ -208,119 +290,79 @@ const MapplsMultipleMarkers: React.FC = () => {
         }}
       >
         <h2 style={{margin: '0 0 1rem 0', fontSize: '1.2rem', color: '#333'}}>
-          Multiple Location Markers
+          Location Markers
         </h2>
-        
         <div style={{ marginBottom: '1rem' }}>
           <h3 style={{margin: '0 0 0.5rem 0', fontSize: '1rem', color: '#555'}}>
-            Select Locations:
+            Displayed Locations:
           </h3>
-          <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px', padding: '0.5rem' }}>
-            {availableLocations.map((location) => (
-              <label
+          <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px', padding: '0.5rem' }}>
+            {availableLocations.map((location, index) => (
+              <div
                 key={location.name}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
                   padding: '0.5rem',
-                  cursor: 'pointer',
                   borderRadius: '4px',
                   marginBottom: '0.25rem',
-                  background: selectedLocations.includes(location.name) ? '#e3f2fd' : 'transparent'
+                  background: '#f8f9fa',
+                  border: '1px solid #e9ecef'
                 }}
               >
-                <input
-                  type="checkbox"
-                  checked={selectedLocations.includes(location.name)}
-                  onChange={() => handleLocationToggle(location.name)}
-                  style={{ marginRight: '0.5rem' }}
-                />
-                <div>
-                  <div style={{ fontWeight: 'bold', textTransform: 'capitalize', fontSize: '0.9rem' }}>
-                    {location.name}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: '#666' }}>
-                    {location.description}
-                  </div>
+                <div style={{ fontWeight: 'bold', fontSize: '0.85rem', lineHeight: '1.2', marginBottom: '0.25rem' }}>
+                  {index + 1}. {location.name}
                 </div>
-              </label>
+                <div style={{ fontSize: '0.75rem', color: '#666', lineHeight: '1.2', marginBottom: '0.25rem' }}>
+                  {location.description}
+                </div>
+                <div style={{ fontSize: '0.7rem', color: '#999' }}>
+                  📍 {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+                </div>
+              </div>
             ))}
           </div>
         </div>
 
-        <div style={{ marginBottom: '1rem' }}>
-          <div style={{ fontSize: '0.9rem', color: '#666', marginBottom: '0.5rem' }}>
-            Selected: {selectedLocations.length} location{selectedLocations.length !== 1 ? 's' : ''}
+        {isLoading && (
+          <div style={{ 
+            padding: '0.75rem', 
+            background: '#fff3cd', 
+            borderRadius: '4px',
+            border: '1px solid #ffeaa7',
+            color: '#856404',
+            fontSize: '0.9rem',
+            textAlign: 'center'
+          }}>
+            🔄 Loading markers...
           </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
-          <button
-            onClick={handlePlaceMarkers}
-            disabled={isLoading || !mapReady || selectedLocations.length === 0}
-            style={{
-              padding: "0.75rem",
-              background: (isLoading || !mapReady || selectedLocations.length === 0) ? "#ccc" : "#28a745",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              cursor: (isLoading || !mapReady || selectedLocations.length === 0) ? "not-allowed" : "pointer",
-              fontSize: '0.9rem',
-              fontWeight: 'bold'
-            }}
-          >
-            {isLoading ? "Placing Markers..." : mapReady ? `Place ${selectedLocations.length} Marker${selectedLocations.length !== 1 ? 's' : ''}` : "Loading Map..."}
-          </button>
-          
-          <button
-            onClick={handleClearMarkers}
-            disabled={!markers}
-            style={{
-              padding: "0.75rem",
-              background: !markers ? "#ccc" : "#dc3545",
-              color: "#fff",
-              border: "none",
-              borderRadius: "4px",
-              cursor: !markers ? "not-allowed" : "pointer",
-              fontSize: '0.9rem',
-              fontWeight: 'bold'
-            }}
-          >
-            Clear All Markers
-          </button>
-        </div>
+        )}
 
         {error && (
           <div style={{ 
-            marginTop: "0.75rem", 
             color: "#d9534f", 
             fontSize: "0.875rem", 
             textAlign: 'left',
-            padding: '0.5rem',
+            padding: '0.75rem',
             background: '#f8d7da',
             borderRadius: '4px',
             border: '1px solid #f5c6cb'
           }}>
-            {error}
+            ❌ {error}
           </div>
         )}
 
-        <div style={{ 
-          marginTop: '1rem', 
-          padding: '0.75rem', 
-          background: '#e8f4fd', 
-          borderRadius: '4px',
-          fontSize: '0.8rem',
-          color: '#0c5460'
-        }}>
-          <strong>Features:</strong>
-          <ul style={{ margin: '0.5rem 0 0 1rem', padding: 0 }}>
-            <li>Marker clustering for better performance</li>
-            <li>Interactive popups with location details</li>
-            <li>Auto-fit bounds to show all markers</li>
-            <li>Smooth animations and transitions</li>
-          </ul>
-        </div>
+        {mapReady && !isLoading && !error && (
+          <div style={{ 
+            padding: '0.75rem', 
+            background: '#d4edda', 
+            borderRadius: '4px',
+            border: '1px solid #c3e6cb',
+            color: '#155724',
+            fontSize: '0.9rem',
+            textAlign: 'center'
+          }}>
+            ✅ {availableLocations.length} markers placed successfully!
+          </div>
+        )}
       </div>
 
       {/* Map Container */}
