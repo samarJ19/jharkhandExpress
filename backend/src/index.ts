@@ -39,6 +39,39 @@ app.get("/api/get-mappls-token", async (req: Request, res: Response) => {
   }
 });
 
+app.get("/api/get-directions", async (req: Request, res: Response) => {
+  const { origin, destination } = req.query;
+
+  // Set default values, which can be overridden by query params from the frontend
+  const profile = req.query.profile || 'driving'; // driving, walking, biking
+  const resource = req.query.resource || 'route'; // route, route_eta
+
+  if (!origin || !destination) {
+    return res.status(400).json({ error: "Origin and destination are required." });
+  }
+
+  const coordinates = `${(origin as string).split(',').reverse().join(',')};${(destination as string).split(',').reverse().join(',')}`;
+  
+  const apiKey = process.env.MAPPLS_REST_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: "API key is not configured on the server." });
+  }
+
+  // Build the URL with additional dynamic parameters
+  const url = `https://apis.mappls.com/advancedmaps/v1/${apiKey}/route_adv/${profile}/${coordinates}?geometries=geojson&overview=full&steps=true&resource=${resource}`;
+
+  try {
+    const response = await axios.get(url);
+    res.json(response.data);
+  } catch (err) {
+    const error = err as AxiosError;
+    console.error("Directions API Error:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to fetch directions from Mappls API." });
+  }
+});
+
+
+
 app.listen(5000, () => {
   console.log("✅ Server running on http://localhost:5000");
 });
