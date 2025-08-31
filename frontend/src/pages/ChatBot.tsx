@@ -17,7 +17,8 @@ import {
   Star,
   MessageCircle,
 } from "lucide-react";
-import MapplsMultipleMarkers from "./MultipleMarker";
+import DirectionsMap from "./DirectionBetweenMultiple";
+
 
 export default function Chatbot() {
   const [input, setInput] = useState("");
@@ -103,7 +104,7 @@ export default function Chatbot() {
       
       if (botContent.trim()) {
         try {
-          const poiResponse = await fetch("https://0e1cd13a436e.ngrok-free.app/extract-poi-geocodes", {
+          const poiResponse = await fetch("https://promptyatra-1052532391820.europe-west1.run.app/extract-poi-geocodes", {
             method: "POST",
             headers: { 
               "Content-Type": "application/json",
@@ -397,7 +398,7 @@ export default function Chatbot() {
         {poiData && (
           <div className="w-1/2 bg-white">
             <div className="h-full">
-              <MapplsMultipleMarkers locationData={poiData} />
+              <DirectionsMap locationData={poiData} />
             </div>
           </div>
         )}
