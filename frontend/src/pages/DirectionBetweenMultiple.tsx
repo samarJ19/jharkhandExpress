@@ -1,66 +1,130 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import axios from "axios";
+import { ChevronLeft, ChevronRight, Maximize2, Minimize2, Navigation, MapPin } from "lucide-react";
+import LocationCard from "../Component/LocationCard";
 
-// --- INTERFACES AND HELPER FUNCTIONS ---
 interface Geocode {
   place: string;
   lat: string | null;
   lon: string | null;
 }
+
 interface LocationData {
+  status: boolean;
+  message: string;
   data: {
+    poi: string[];
     geocodes: Geocode[];
   };
 }
+
 declare global {
-  interface Window { mappls: any; initMapCallback?: () => void; }
+  interface Window {
+    mappls: any;
+    initMapCallback?: () => void;
+  }
 }
 
 const formatRouteInfo = (distanceMeters: number, durationSeconds: number) => {
   const distanceKm = (distanceMeters / 1000).toFixed(1);
   const hours = Math.floor(durationSeconds / 3600);
   const minutes = Math.floor((durationSeconds % 3600) / 60);
-  let durationStr = '';
+  let durationStr = "";
   if (hours > 0) durationStr += `${hours} hr `;
   if (minutes > 0) durationStr += `${minutes} min`;
-  return { distance: `${distanceKm} km`, duration: durationStr.trim() || 'Less than a minute' };
+  return {
+    distance: `${distanceKm} km`,
+    duration: durationStr.trim() || "Less than a minute",
+  };
 };
 
 const getManeuverIcon = (maneuver: any): React.ReactNode => {
-    const type = maneuver.type;
-    const modifier = maneuver.modifier;
-    const style = { width: '24px', height: '24px', fill: '#333' };
-    if (type === 'depart') return <svg style={style} viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>;
-    if (type === 'arrive') return <svg style={style} viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-12h2v4h-2zm0 6h2v2h-2z"/></svg>;
-    switch (modifier) {
-        case 'left': case 'sharp left': case 'slight left': return <svg style={style} viewBox="0 0 24 24"><path d="M9 5v2h6.58c1.33 0 2.42 1.08 2.42 2.42V18h-2v-8.58c0-.23-.19-.42-.42-.42H9v2L5 9l4-4z"/></svg>;
-        case 'right': case 'sharp right': case 'slight right': return <svg style={style} viewBox="0 0 24 24"><path d="M15 5v2H8.42c-1.33 0-2.42 1.08-2.42 2.42V18h2v-8.58c0-.23-.19-.42-.42-.42H15v2l4-4-4-4z"/></svg>;
-        case 'uturn': return <svg style={style} viewBox="0 0 24 24"><path d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 0 4.42 3.58 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>;
-        default: return <svg style={style} viewBox="0 0 24 24"><path d="M11 7v10h2V7h-2zm0-4h2v2h-2V3z"/></svg>;
-    }
+  const type = maneuver.type;
+  const modifier = maneuver.modifier;
+  const iconClass = "w-6 h-6 text-gray-600";
+  
+  if (type === "depart") return <Navigation className={iconClass} />;
+  if (type === "arrive") return <MapPin className={iconClass} />;
+  
+  switch (modifier) {
+    case "left":
+    case "sharp left":
+    case "slight left":
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="currentColor">
+          <path d="M9 5v2h6.58c1.33 0 2.42 1.08 2.42 2.42V18h-2v-8.58c0-.23-.19-.42-.42-.42H9v2L5 9l4-4z" />
+        </svg>
+      );
+    case "right":
+    case "sharp right":
+    case "slight right":
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="currentColor">
+          <path d="M15 5v2H8.42c-1.33 0-2.42 1.08-2.42 2.42V18h2v-8.58c0-.23-.19-.42-.42-.42H15v2l4-4-4-4z" />
+        </svg>
+      );
+    case "uturn":
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 0 4.42 3.58 8 8s8-3.58 8-8-3.58-8-8-8z" />
+        </svg>
+      );
+    default:
+      return (
+        <svg className={iconClass} viewBox="0 0 24 24" fill="currentColor">
+          <path d="M11 7v10h2V7h-2zm0-4h2v2h-2V3z" />
+        </svg>
+      );
+  }
 };
 
-const DirectionsMap: React.FC<{ locationData: LocationData }> = ({ locationData }) => {
+const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
+  locationData,
+}) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<any[]>([]);
   const [map, setMap] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [mapReady, setMapReady] = useState(false);
-  const [routeInfo, setRouteInfo] = useState<{ distance: string; duration: string } | null>(null);
+  const [routeInfo, setRouteInfo] = useState<{
+    distance: string;
+    duration: string;
+  } | null>(null);
   const [steps, setSteps] = useState<any[]>([]);
-  const [activeView, setActiveView] = useState('locations');
+  const [activeView, setActiveView] = useState("locations");
   
+  // Panel state management
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMaximized, setIsMaximized] = useState(false);
+  const [panelWidth, setPanelWidth] = useState(350);
+  const [hoveredLocation, setHoveredLocation] = useState<{ place: string; lat: number; lng: number; } | null>(null);
+  const [cardStyle, setCardStyle] = useState<React.CSSProperties>({});
+  const [cardPosition, setCardPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  
+  // Fixed: Proper data extraction from the new structure
   const validLocations = useMemo(() => {
-    // Now uses the locationData prop and re-calculates when it changes.
-    if (!locationData?.data?.geocodes) return [];
-    return locationData.data.geocodes
-      .filter(geocode => geocode.lat && geocode.lon)
-      .map(geocode => ({
+    if (!locationData?.data?.geocodes) {
+      console.log("No geocodes found in locationData:", locationData);
+      return [];
+    }
+    
+    const locations = locationData.data.geocodes
+      .filter((geocode) => {
+        const hasValidCoords = geocode.lat && geocode.lon && 
+                              geocode.lat !== "null" && geocode.lon !== "null" &&
+                              geocode.lat !== null && geocode.lon !== null;
+        return hasValidCoords;
+      })
+      .map((geocode) => ({
         place: geocode.place,
         lat: parseFloat(geocode.lat!),
         lng: parseFloat(geocode.lon!),
       }));
+    
+    console.log("Valid locations processed:", locations);
+    return locations;
   }, [locationData]);
 
   const fetchToken = async (): Promise<string> => {
@@ -76,8 +140,30 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({ locationData 
         window.initMapCallback = () => {
           setTimeout(() => {
             if (mapRef.current && window.mappls) {
-              const center = validLocations.length > 0 ? [validLocations[0].lng, validLocations[0].lat] : [77.4126, 23.2599]; // Bhopal default
-              const mapInstance = new window.mappls.Map(mapRef.current, { center, zoom: 12 });
+              // Default center if no locations
+              const defaultCenter = [77.4126, 23.2599]; // Bhopal
+              let center = defaultCenter;
+              let zoom = 5; // Start with a lower zoom level
+
+              if (validLocations.length > 0) {
+                if (validLocations.length === 1) {
+                  // Single location - center on it with moderate zoom
+                  center = [validLocations[0].lng, validLocations[0].lat];
+                  zoom = 12;
+                } else {
+                  // Multiple locations - calculate center
+                  const avgLat = validLocations.reduce((sum, loc) => sum + loc.lat, 0) / validLocations.length;
+                  const avgLng = validLocations.reduce((sum, loc) => sum + loc.lng, 0) / validLocations.length;
+                  center = [avgLng, avgLat];
+                  zoom = 8; // Start with moderate zoom, will be adjusted by fitBounds
+                }
+              }
+
+              const mapInstance = new window.mappls.Map(mapRef.current, {
+                center,
+                zoom,
+              });
+              
               setMap(mapInstance);
               setMapReady(true);
             }
@@ -86,47 +172,144 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({ locationData 
         const script = document.createElement("script");
         script.src = `https://apis.mappls.com/advancedmaps/api/${token}/map_sdk?layer=vector&v=3.0&callback=initMapCallback`;
         document.head.appendChild(script);
-        return () => { 
-          if (script.parentNode) document.head.removeChild(script); 
-          delete window.initMapCallback; 
+        return () => {
+          if (script.parentNode) document.head.removeChild(script);
+          delete window.initMapCallback;
         };
-      } catch (err) { 
-        setError("Authentication failed. Ensure the backend for token is running."); 
+      } catch (err) {
+        console.error("Map initialization error:", err);
+        setError("Authentication failed. Ensure the backend for token is running.");
         setIsLoading(false);
       }
     };
     initMap();
-    // Intentionally left with an empty dependency array to run only once on mount.
-    // The main drawing logic is handled in the next effect.
   }, []);
 
   const clearMapFeatures = () => {
     // Clear markers
-    markersRef.current.forEach(marker => {
-      if (marker && typeof marker.remove === 'function') marker.remove();
+    markersRef.current.forEach((marker) => {
+      if (marker && typeof marker.remove === "function") marker.remove();
     });
     markersRef.current = [];
     // Clear route
     if (map) {
       try {
-        if (map.getLayer('route')) map.removeLayer('route');
-        if (map.getSource('route')) map.removeSource('route');
-      } catch (e) { /* Ignore if it doesn't exist */ }
+        if (map.getLayer && map.getLayer("route")) map.removeLayer("route");
+        if (map.getSource && map.getSource("route")) map.removeSource("route");
+      } catch (e) {
+        console.warn("Error clearing route:", e);
+      }
     }
   };
 
+  // Fix the createMarkers function for proper positioning
   const createMarkers = (locations: any[]) => {
     return locations.map((loc) => {
-      const popupHtml = `<div style="font-family: sans-serif; padding: 10px;"><strong style="color: #333;">${loc.place}</strong></div>`;
-      
-      return new window.mappls.Marker({ 
-        map: map, 
+      const marker = new window.mappls.Marker({
+        map: map,
         position: { lat: loc.lat, lng: loc.lng },
-        fitbounds: true,
-        popupHtml: popupHtml,
+        fitbounds: false, // We'll handle bounds manually
       });
+
+      // Wait for marker to be added to DOM, then get its element
+      setTimeout(() => {
+        const markerElement = marker.getElement ? marker.getElement() : 
+                             marker._element ? marker._element :
+                             document.querySelector(`[data-marker-id="${marker._id}"]`);
+        
+        if (markerElement) {
+          console.log("Found marker element:", markerElement);
+          
+          markerElement.addEventListener('mouseenter', (e: any) => {
+            console.log("Mouse entered marker!");
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (!mapRef.current) return;
+
+            const mapRect = mapRef.current.getBoundingClientRect();
+            const markerScreenPos = map.project([loc.lng, loc.lat]);
+
+            // Card dimensions
+            const CARD_WIDTH = 250;
+            const CARD_HEIGHT = 120;
+            const MARGIN = 15;
+
+            // Calculate absolute position on screen
+            let x = mapRect.left + markerScreenPos.x;
+            let y = mapRect.top + markerScreenPos.y;
+
+            // Smart positioning to avoid boundaries
+            // Check if card would go off right edge
+            if (x + CARD_WIDTH + MARGIN > window.innerWidth) {
+              x = x - CARD_WIDTH - MARGIN; // Position to the left of marker
+            } else {
+              x = x + MARGIN; // Position to the right of marker
+            }
+
+            // Check if card would go off bottom edge
+            if (y + CARD_HEIGHT + MARGIN > window.innerHeight) {
+              y = y - CARD_HEIGHT - MARGIN; // Position above marker
+            } else {
+              y = y + MARGIN; // Position below marker
+            }
+
+            // Ensure it doesn't go off left edge
+            x = Math.max(MARGIN, x);
+            // Ensure it doesn't go off top edge  
+            y = Math.max(MARGIN, y);
+
+            // Also ensure it doesn't go off right/bottom with the corrections
+            x = Math.min(window.innerWidth - CARD_WIDTH - MARGIN, x);
+            y = Math.min(window.innerHeight - CARD_HEIGHT - MARGIN, y);
+
+            setCardPosition({ x, y });
+            setHoveredLocation(loc);
+          });
+
+          markerElement.addEventListener('mouseleave', (e: any) => {
+            console.log("Mouse left marker!");
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Add delay to prevent flickering
+            setTimeout(() => {
+              setHoveredLocation(null);
+            }, 150);
+          });
+
+          markerElement.style.cursor = 'pointer';
+          markerElement.style.pointerEvents = 'auto';
+          
+        } else {
+          console.warn("Could not find marker DOM element for:", loc.place);
+          
+          // Fallback approach
+          setTimeout(() => {
+            const allMarkers = document.querySelectorAll('.mappls-marker, .mapboxgl-marker, [class*="marker"]');
+            console.log("All potential markers found:", allMarkers.length);
+            
+            if (allMarkers.length > 0) {
+              const lastMarker = allMarkers[allMarkers.length - 1] as HTMLElement;
+              lastMarker.addEventListener('mouseenter', () => {
+                console.log("Fallback: Mouse entered marker!");
+                setHoveredLocation(loc);
+              });
+              
+              lastMarker.addEventListener('mouseleave', () => {
+                console.log("Fallback: Mouse left marker!");
+                setTimeout(() => setHoveredLocation(null), 200);
+              });
+            }
+          }, 500);
+        }
+      }, 100); // Give time for marker to be added to DOM
+
+      return marker;
     });
   };
+
+
 
   // Main effect to draw markers and route based on props
   useEffect(() => {
@@ -137,30 +320,48 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({ locationData 
       setError("");
       setRouteInfo(null);
       setSteps([]);
-      
+
       clearMapFeatures();
 
+      console.log("Processing valid locations:", validLocations);
+
       if (validLocations.length === 0) {
-        setError("No valid locations provided.");
+        setError("No valid locations with coordinates found.");
         setIsLoading(false);
         return;
       }
-      
+
       // Create markers from validLocations
       markersRef.current = createMarkers(validLocations);
-      
+
       // Handle route drawing for multiple locations
       if (validLocations.length > 1) {
-        const pathString = validLocations.map(loc => `${loc.lng},${loc.lat}`).join(';');
+        const pathString = validLocations
+          .map((loc) => `${loc.lng},${loc.lat}`)
+          .join(";");
+        
+        console.log("Route path string:", pathString);
+        
         try {
-          const directionsResponse = await axios.get("http://localhost:5000/api/get-directions-multi", { 
-            params: { path: pathString } 
-          });
+          const directionsResponse = await axios.get(
+            "http://localhost:5000/api/get-directions-multi",
+            {
+              params: { path: pathString },
+            }
+          );
+          
+          console.log("Directions response:", directionsResponse.data);
           const route = directionsResponse.data.routes?.[0];
+
           if (route && route.geometry) {
             drawRoute(route.geometry);
             setRouteInfo(formatRouteInfo(route.distance, route.duration));
-            setSteps(route.legs.reduce((allSteps: any[], leg: any) => [...allSteps, ...leg.steps], []));
+            const allSteps = route.legs?.reduce(
+              (allSteps: any[], leg: any) => [...allSteps, ...(leg.steps || [])],
+              []
+            ) || [];
+            setSteps(allSteps);
+            setActiveView("directions"); // Switch to directions when route is available
           } else {
             setError("No route found connecting the locations.");
           }
@@ -169,91 +370,263 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({ locationData 
           setError("Failed to fetch route. Showing locations only.");
         }
       } else {
-        map.flyTo({ center: [validLocations[0].lng, validLocations[0].lat], zoom: 14 });
-        setError("Add at least two locations to see a route.");
+        // Single location - center map on it
+        map.flyTo({
+          center: [validLocations[0].lng, validLocations[0].lat],
+          zoom: 14,
+        });
       }
-      
+
       setIsLoading(false);
     };
 
     fetchDataAndDraw();
-    
-  }, [mapReady, map, validLocations]); // Re-run whenever map is ready or validLocations (from props) change
+  }, [mapReady, map, validLocations]);
 
   const drawRoute = (routeGeoJSON: any) => {
     if (!map || !routeGeoJSON) return;
     try {
-      map.addSource('route', { 'type': 'geojson', 'data': routeGeoJSON });
-      map.addLayer({ 
-        'id': 'route', 
-        'type': 'line', 
-        'source': 'route', 
-        'layout': { 'line-join': 'round', 'line-cap': 'round' }, 
-        'paint': { 'line-color': '#007bff', 'line-width': 6 } 
-      });
+      if (map.addSource) {
+        map.addSource("route", { type: "geojson", data: routeGeoJSON });
+        map.addLayer({
+          id: "route",
+          type: "line",
+          source: "route",
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": "#3b82f6", "line-width": 4 },
+        });
+      }
     } catch (error) {
       console.error("Error drawing route:", error);
     }
   };
+  useEffect(() => {
+    // Give the browser's layout engine a moment to reflow the UI after a state change
+    const resizeTimer = setTimeout(() => {
+      if (map && typeof map.resize === 'function') {
+        map.resize();
+      }
+    }, 300); // A 300ms delay is usually enough for CSS transitions to complete
 
-  const toggleButtonStyle = { flex: 1, padding: '0.75rem', border: 'none', background: 'none', cursor: 'pointer', fontSize: '1rem', fontWeight: 'bold', borderBottom: '3px solid transparent', transition: 'all 0.2s ease'};
-  const activeToggleButtonStyle = { ...toggleButtonStyle, color: '#007bff', borderBottom: '3px solid #007bff' };
+    return () => clearTimeout(resizeTimer);
+  }, [isCollapsed, isMaximized, map]);
+  
+  const toggleCollapse = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
+  const toggleMaximize = () => {
+    setIsMaximized(!isMaximized);
+    if (!isMaximized) {
+      setPanelWidth(500);
+    } else {
+      setPanelWidth(350);
+    }
+  };
+
+  const getPanelWidth = () => {
+    if (isCollapsed) return 60;
+    if (isMaximized) return Math.min(600, window.innerWidth * 0.5);
+    return panelWidth;
+  };
 
   return (
-    <div style={{ display: 'flex', width: "100%", height: "100vh", fontFamily: 'sans-serif', backgroundColor: '#f9f9f9' }}>
-      <div style={{ width: '30%', minWidth: '350px', maxWidth: '450px', background: '#fff', boxShadow: '2px 0 10px rgba(0,0,0,0.1)', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: "1rem", borderBottom: '1px solid #eee' }}>
-          <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.2rem', color: '#333' }}>Trip Details</h2>
-          {isLoading && <p>Loading Trip Data...</p>}
-          {error && <div style={{ color: "#d9534f", fontSize: '0.9rem', padding: '0.5rem', backgroundColor: '#fdd', borderRadius: '4px' }}>{error}</div>}
+    <div className="flex w-full h-full bg-gray-100">
+      {/* Resizable Side Panel */}
+      <div
+        className="bg-white shadow-lg z-10 flex flex-col border-r border-gray-200"
+        style={{ width: `${getPanelWidth()}px`, minWidth: isCollapsed ? "60px" : "300px" }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
+          {!isCollapsed && (
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+              <MapPin className="w-5 h-5 mr-2 text-blue-600" />
+              Trip Details
+            </h2>
+          )}
+          <div className="flex items-center space-x-1">
+            {!isCollapsed && (
+              <button
+                onClick={toggleMaximize}
+                className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors"
+                title={isMaximized ? "Minimize" : "Maximize"}
+              >
+                {isMaximized ? (
+                  <Minimize2 className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Maximize2 className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+            )}
+            <button
+              onClick={toggleCollapse}
+              className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors"
+              title={isCollapsed ? "Expand" : "Collapse"}
+            >
+              {isCollapsed ? (
+                <ChevronRight className="w-4 h-4 text-gray-600" />
+              ) : (
+                <ChevronLeft className="w-4 h-4 text-gray-600" />
+              )}
+            </button>
+          </div>
         </div>
-        
-        {validLocations.length > 0 && (
+
+        {!isCollapsed && (
           <>
-            <div style={{ display: 'flex', borderBottom: '1px solid #eee' }}>
-              <button onClick={() => setActiveView('directions')} style={activeView === 'directions' ? activeToggleButtonStyle : toggleButtonStyle} disabled={!routeInfo}>Directions</button>
-              <button onClick={() => setActiveView('details')} style={activeView === 'details' ? activeToggleButtonStyle : toggleButtonStyle}>Locations</button>
-            </div>
-            
-            <div style={{ flex: 1, overflowY: 'auto', padding: '0 1rem' }}>
-              {routeInfo && (
-                <div style={{ margin: "1rem 0", padding: '0.75rem', background: '#f0f8ff', borderRadius: '4px' }}>
-                  <p style={{ margin: 0 }}><strong>Distance:</strong> {routeInfo.distance}</p>
-                  <p style={{ margin: '0.25rem 0 0 0' }}><strong>Duration:</strong> {routeInfo.duration}</p>
+            {/* Loading and Error States */}
+            {(isLoading || error) && (
+              <div className="p-4 border-b border-gray-200">
+                {isLoading && (
+                  <div className="flex items-center space-x-2 text-blue-600">
+                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-sm">Loading Trip Data...</span>
+                  </div>
+                )}
+                {error && (
+                  <div className="text-red-600 text-sm p-3 bg-red-50 border border-red-200 rounded-lg">
+                    {error}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab Navigation */}
+            {validLocations.length > 0 && (
+              <>
+                <div className="flex border-b border-gray-200">
+                  <button
+                    onClick={() => setActiveView("locations")}
+                    className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                      activeView === "locations"
+                        ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    }`}
+                  >
+                    Locations ({validLocations.length})
+                  </button>
+                  {routeInfo && (
+                    <button
+                      onClick={() => setActiveView("directions")}
+                      className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                        activeView === "directions"
+                          ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      }`}
+                    >
+                      Directions
+                    </button>
+                  )}
                 </div>
-              )}
-              
-              {activeView === 'directions' && (
-                  steps.length > 0 ? (
-                    <ul style={{ listStyle: 'none', padding: 0, margin: '1rem 0' }}>
-                      {steps.map((step, index) => (
-                        <li key={index} style={{ padding: '1rem 0', borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                          <div style={{ flexShrink: 0, width: '40px', textAlign: 'center' }}>{getManeuverIcon(step.maneuver)}</div>
-                          <div>
-                            <p style={{ margin: 0, fontWeight: 'bold' }}>{step.maneuver.instruction}</p>
-                            <p style={{ margin: '0.25rem 0 0 0', color: '#666' }}>{step.distance > 1000 ? `${(step.distance / 1000).toFixed(1)} km` : `${Math.round(step.distance)} m`}</p>
+
+                {/* Content Area */}
+                <div className="flex-1 overflow-y-auto">
+                  {/* Route Info */}
+                  {routeInfo && (
+                    <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600">Distance:</span>
+                          <p className="font-semibold text-gray-900">{routeInfo.distance}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-600">Duration:</span>
+                          <p className="font-semibold text-gray-900">{routeInfo.duration}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Locations View */}
+                  {activeView === "locations" && (
+                    <div className="p-4">
+                      <div className="space-y-3">
+                        {validLocations.map((loc, index) => (
+                          <div
+                            key={`${loc.place}-${index}`}
+                            className="flex items-start space-x-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer"
+                            onClick={() => {
+                              if (map && map.flyTo) {
+                                map.flyTo({
+                                  center: [loc.lng, loc.lat],
+                                  zoom: 15,
+                                });
+                              }
+                            }}
+                          >
+                            <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-semibold">
+                              {index + 1}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate" title={loc.place}>
+                                {loc.place}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}
+                              </p>
+                            </div>
                           </div>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : <div style={{ padding: '1rem', textAlign: 'center', color: '#666' }}>{!isLoading && 'No directions to show.'}</div>
-              )}
-              
-              {activeView === 'details' && (
-                <ul style={{ listStyle: 'none', padding: 0, margin: '1rem 0' }}>
-                  {validLocations.map((loc, index) => (
-                    <li key={loc.place} style={{ padding: '1rem 0', borderBottom: '1px solid #eee' }}>
-                      <p style={{ margin: 0, fontWeight: 'bold' }}>{index + 1}. {loc.place}</p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Directions View */}
+                  {activeView === "directions" && (
+                    <div className="p-4">
+                      {steps.length > 0 ? (
+                        <div className="space-y-4">
+                          {steps.map((step, index) => (
+                            <div
+                              key={index}
+                              className="flex items-start space-x-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
+                            >
+                              <div className="flex-shrink-0 mt-1">
+                                {getManeuverIcon(step.maneuver)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 leading-5">
+                                  {step.maneuver?.instruction || "Continue"}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {step.distance > 1000
+                                    ? `${(step.distance / 1000).toFixed(1)} km`
+                                    : `${Math.round(step.distance)} m`}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <Navigation className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                          <p className="text-sm">No directions available</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
-      
-      <div ref={mapRef} id="mappls-map-container" />
+      {/* Map Container */}
+      <div ref={mapRef} className="flex-1 bg-gray-200" id="mappls-map-container" />
+      {hoveredLocation && (
+        <LocationCard
+          location={hoveredLocation}
+          onClose={() => setHoveredLocation(null)}
+          style={{
+            position: 'fixed',
+            left: cardPosition.x,
+            top: cardPosition.y,
+            zIndex: 1000,
+            pointerEvents: 'auto',
+          }}
+        />
+      )}
     </div>
   );
 };

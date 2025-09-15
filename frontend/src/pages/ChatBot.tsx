@@ -18,7 +18,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import DirectionsMap from "./DirectionBetweenMultiple";
-
+import FeatureComponent from "../Component/FeatureComponent"; // Import the new component
 
 export default function Chatbot() {
   const [input, setInput] = useState("");
@@ -144,6 +144,16 @@ export default function Chatbot() {
     }
   };
 
+  // Handle feature clicks
+  const handleFeatureClick = (feature: string) => {
+    setInput(feature);
+    // Optionally auto-submit when a feature is clicked
+    // handleSubmit();
+  };
+
+  // Check if we should show the right panel (either features or map)
+  const showRightPanel = true; // Always show right panel now
+
   return (
     <div className="h-screen bg-gray-50 flex">
       {/* Left Sidebar */}
@@ -168,11 +178,11 @@ export default function Chatbot() {
         </div>
       </div>
 
-      {/* Main Content Area - Split when POI data is available */}
-      <div className={`flex-1 flex ${poiData ? 'divide-x divide-gray-200' : ''}`}>
+      {/* Main Content Area - Split between chat and right panel */}
+      <div className={`flex-1 flex ${showRightPanel ? 'divide-x divide-gray-200' : ''}`}>
         
         {/* Chat Area */}
-        <div className={`flex flex-col ${poiData ? 'w-1/2' : 'flex-1'}`}>
+        <div className={`flex flex-col ${showRightPanel ? 'w-1/2' : 'flex-1'}`}>
           {/* Top Header */}
           <div className="border-b border-gray-200 bg-white px-6 py-4">
             <div className="flex items-center justify-between">
@@ -394,12 +404,18 @@ export default function Chatbot() {
           </div>
         </div>
 
-        {/* Map Area - Conditionally rendered when POI data is available */}
-        {poiData && (
+        {/* Right Panel - Conditionally shows FeatureComponent or DirectionsMap */}
+        {showRightPanel && (
           <div className="w-1/2 bg-white">
-            <div className="h-full">
-              <DirectionsMap locationData={poiData} />
-            </div>
+            {poiData ? (
+              // Show map when POI data is available
+              <div className="h-full">
+                <DirectionsMap locationData={poiData} />
+              </div>
+            ) : (
+              // Show features when no POI data
+              <FeatureComponent onFeatureClick={handleFeatureClick} />
+            )}
           </div>
         )}
       </div>
