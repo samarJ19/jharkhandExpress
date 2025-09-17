@@ -16,7 +16,7 @@ const corsOptions = {
 };
 
 const app = express();
-
+const bodyParser = require('body-parser');
 
 app.use(cors(corsOptions));
 
@@ -119,6 +119,7 @@ app.post("/stream-itinerary", async (req: Request, res: Response) => {
         }
     });
 });
+
 
 
 

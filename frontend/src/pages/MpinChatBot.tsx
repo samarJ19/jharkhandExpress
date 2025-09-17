@@ -21,7 +21,7 @@ import DirectionsMap from "./DirectionBetweenMultiple";
 import FeatureComponent from "../Component/FeatureComponent"; // Import the new component
 import { MapLoadingShimmer } from "../Component/MapLoadingState";
 
-export default function Chatbot() {
+export default function MpinChatBot() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -75,7 +75,7 @@ export default function Chatbot() {
         {
           id: botMessageId,
           type: "bot",
-          content: "Jharkhand Treasure Bot is typing...",
+          content: "",
           timestamp: new Date(),
         },
       ]);
@@ -107,23 +107,7 @@ export default function Chatbot() {
       if (botContent.trim()) {
         try {
           setMapLoading(true); // Start map loading
-          const poiResponse = await fetch(
-            "https://promptyatra-1052532391820.europe-west1.run.app/extract-poi-geocodes",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "ngrok-skip-browser-warning": "true", // Common header for ngrok
-              },
-              body: JSON.stringify({ itinerary: botContent }),
-            }
-          ); 
-
-          if (!poiResponse.ok) {
-            throw new Error(`POI extraction failed: ${poiResponse.status}`);
-          }
-
-          const poiResponseData = await poiResponse.json();
+          // Send the botContent to Mpin for POI extraction
 
           // Simulate a slight delay to show the loading screen
           setTimeout(() => {

@@ -1,6 +1,13 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import axios from "axios";
-import { ChevronLeft, ChevronRight, Maximize2, Minimize2, Navigation, MapPin } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Minimize2,
+  Navigation,
+  MapPin,
+} from "lucide-react";
 import LocationCard from "../Component/LocationCard";
 
 interface Geocode {
@@ -42,10 +49,10 @@ const getManeuverIcon = (maneuver: any): React.ReactNode => {
   const type = maneuver.type;
   const modifier = maneuver.modifier;
   const iconClass = "w-6 h-6 text-gray-600";
-  
+
   if (type === "depart") return <Navigation className={iconClass} />;
   if (type === "arrive") return <MapPin className={iconClass} />;
-  
+
   switch (modifier) {
     case "left":
     case "sharp left":
@@ -93,25 +100,34 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
   } | null>(null);
   const [steps, setSteps] = useState<any[]>([]);
   const [activeView, setActiveView] = useState("locations");
-  
+
   // Panel state management
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [panelWidth, setPanelWidth] = useState(350);
   // Rename this state variable
-const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: number; lng: number; } | null>(null);
-  const [cardPosition, setCardPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [selectedLocation, setSelectedLocation] = useState<{
+    place: string;
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [cardPosition, setCardPosition] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
 
-  
   const validLocations = useMemo(() => {
     if (!locationData?.data?.geocodes) {
       return [];
     }
-    
+
     return locationData.data.geocodes
-      .filter((geocode) => 
-        geocode.lat && geocode.lon && 
-        geocode.lat !== "null" && geocode.lon !== "null"
+      .filter(
+        (geocode) =>
+          geocode.lat &&
+          geocode.lon &&
+          geocode.lat !== "null" &&
+          geocode.lon !== "null"
       )
       .map((geocode) => ({
         place: geocode.place,
@@ -133,7 +149,6 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
         window.initMapCallback = () => {
           setTimeout(() => {
             if (mapRef.current && window.mappls) {
-              
               // --- CORRECTED MAP CENTERING LOGIC ---
               let centerCoords = { lat: 23.2599, lng: 77.4126 }; // Default to Bhopal
               let zoom = 5;
@@ -153,7 +168,7 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
                 zoom,
               });
               // --- END OF CORRECTION ---
-              
+
               setMap(mapInstance);
               setMapReady(true);
             }
@@ -168,12 +183,14 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
         };
       } catch (err) {
         console.error("Map initialization error:", err);
-        setError("Authentication failed. Ensure the backend for token is running.");
+        setError(
+          "Authentication failed. Ensure the backend for token is running."
+        );
         setIsLoading(false);
       }
     };
     initMap();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only once on mount
 
   const clearMapFeatures = () => {
@@ -200,31 +217,37 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
       });
 
       setTimeout(() => {
-        const markerElement = marker.getElement ? marker.getElement() : marker._element;
-        
+        const markerElement = marker.getElement
+          ? marker.getElement()
+          : marker._element;
+
         if (markerElement) {
           // ---  START: MODIFIED EVENT LISTENER ---
           // Change 'mouseenter' to 'click' and remove 'mouseleave'
-          markerElement.addEventListener('click', (e: MouseEvent) => {
+          markerElement.addEventListener("click", (e: MouseEvent) => {
             e.stopPropagation();
             if (!mapRef.current) return;
             const mapRect = mapRef.current.getBoundingClientRect();
             const markerScreenPos = map.project([loc.lng, loc.lat]);
-            
-            const CARD_WIDTH = 250, CARD_HEIGHT = 120, MARGIN = 15;
+
+            const CARD_WIDTH = 250,
+              CARD_HEIGHT = 120,
+              MARGIN = 15;
             let x = mapRect.left + markerScreenPos.x + MARGIN;
             let y = mapRect.top + markerScreenPos.y + MARGIN;
-            
-            if (x + CARD_WIDTH > window.innerWidth) x -= (CARD_WIDTH + 2 * MARGIN);
-            if (y + CARD_HEIGHT > window.innerHeight) y -= (CARD_HEIGHT + 2 * MARGIN);
-            
+
+            if (x + CARD_WIDTH > window.innerWidth)
+              x -= CARD_WIDTH + 2 * MARGIN;
+            if (y + CARD_HEIGHT > window.innerHeight)
+              y -= CARD_HEIGHT + 2 * MARGIN;
+
             setCardPosition({ x: Math.max(MARGIN, x), y: Math.max(MARGIN, y) });
             // Use the new state setter
             setSelectedLocation(loc);
           });
           // --- END: MODIFIED EVENT LISTENER ---
-          
-          markerElement.style.cursor = 'pointer';
+
+          markerElement.style.cursor = "pointer";
         } else {
           console.warn("Could not find marker DOM element for:", loc.place);
         }
@@ -254,13 +277,15 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
       markersRef.current = createMarkers(validLocations);
 
       if (validLocations.length > 1) {
-        const pathString = validLocations.map((loc) => `${loc.lng},${loc.lat}`).join(";");
+        const pathString = validLocations
+          .map((loc) => `${loc.lng},${loc.lat}`)
+          .join(";");
         try {
           const directionsResponse = await axios.get(
             "http://localhost:5000/api/get-directions-multi",
             { params: { path: pathString } }
           );
-                    console.log("Full API Response:", directionsResponse.data);
+          console.log("Full API Response:", directionsResponse.data);
 
           const route = directionsResponse.data.routes?.[0];
           console.log("Extracted Route Object:", route);
@@ -268,11 +293,15 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
           if (route && route.geometry) {
             drawRoute(route.geometry);
             setRouteInfo(formatRouteInfo(route.distance, route.duration));
-            const allSteps = route.legs?.reduce((acc: any[], leg: any) => [...acc, ...(leg.steps || [])], []) || [];
+            const allSteps =
+              route.legs?.reduce(
+                (acc: any[], leg: any) => [...acc, ...(leg.steps || [])],
+                []
+              ) || [];
             setSteps(allSteps);
             setActiveView("directions");
           } else {
-                        console.error("Route or route.geometry is missing!");
+            console.error("Route or route.geometry is missing!");
 
             setError("No route found connecting the locations.");
           }
@@ -283,7 +312,7 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
       } else {
         // If map didn't initialize at the right spot, this ensures it goes there.
         map.flyTo({
-          center: {lat:validLocations[0].lat,lng:validLocations[0].lng},
+          center: { lat: validLocations[0].lat, lng: validLocations[0].lng },
           zoom: 14,
         });
       }
@@ -297,8 +326,8 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
   const drawRoute = (routeGeoJSON: any) => {
     if (!map || !routeGeoJSON) return;
     try {
-      if (map.getSource('route')) {
-        map.getSource('route').setData(routeGeoJSON);
+      if (map.getSource("route")) {
+        map.getSource("route").setData(routeGeoJSON);
       } else {
         map.addSource("route", { type: "geojson", data: routeGeoJSON });
         map.addLayer({
@@ -306,21 +335,25 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
           type: "line",
           source: "route",
           layout: { "line-join": "round", "line-cap": "round" },
-          paint: { "line-color": "#3b82f6", "line-width": 6, "line-opacity": 0.8 },
+          paint: {
+            "line-color": "#3b82f6",
+            "line-width": 6,
+            "line-opacity": 0.8,
+          },
         });
       }
     } catch (error) {
       console.error("Error drawing route:", error);
     }
   };
-  
+
   useEffect(() => {
     const resizeTimer = setTimeout(() => {
-      if (map && typeof map.resize === 'function') map.resize();
+      if (map && typeof map.resize === "function") map.resize();
     }, 300);
     return () => clearTimeout(resizeTimer);
   }, [isCollapsed, isMaximized, map]);
-  
+
   const toggleCollapse = () => setIsCollapsed(!isCollapsed);
   const toggleMaximize = () => setIsMaximized(!isMaximized);
 
@@ -334,7 +367,10 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
     <div className="flex w-full h-full bg-gray-100">
       <div
         className="bg-white shadow-lg z-10 flex flex-col border-r border-gray-200 transition-all duration-300"
-        style={{ width: `${getPanelWidth()}px`, minWidth: isCollapsed ? "60px" : "300px" }}
+        style={{
+          width: `${getPanelWidth()}px`,
+          minWidth: isCollapsed ? "60px" : "300px",
+        }}
       >
         <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
           {!isCollapsed && (
@@ -350,7 +386,11 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
                 className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors"
                 title={isMaximized ? "Minimize" : "Maximize"}
               >
-                {isMaximized ? <Minimize2 className="w-4 h-4 text-gray-600" /> : <Maximize2 className="w-4 h-4 text-gray-600" />}
+                {isMaximized ? (
+                  <Minimize2 className="w-4 h-4 text-gray-600" />
+                ) : (
+                  <Maximize2 className="w-4 h-4 text-gray-600" />
+                )}
               </button>
             )}
             <button
@@ -358,7 +398,11 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
               className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors"
               title={isCollapsed ? "Expand" : "Collapse"}
             >
-              {isCollapsed ? <ChevronRight className="w-4 h-4 text-gray-600" /> : <ChevronLeft className="w-4 h-4 text-gray-600" />}
+              {isCollapsed ? (
+                <ChevronRight className="w-4 h-4 text-gray-600" />
+              ) : (
+                <ChevronLeft className="w-4 h-4 text-gray-600" />
+              )}
             </button>
           </div>
         </div>
@@ -374,7 +418,9 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
                   </div>
                 )}
                 {error && (
-                  <div className="text-red-600 text-sm p-3 bg-red-50 border border-red-200 rounded-lg">{error}</div>
+                  <div className="text-red-600 text-sm p-3 bg-red-50 border border-red-200 rounded-lg">
+                    {error}
+                  </div>
                 )}
               </div>
             )}
@@ -385,7 +431,9 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
                   <button
                     onClick={() => setActiveView("locations")}
                     className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                      activeView === "locations" ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50" : "text-gray-600 hover:bg-gray-50"
+                      activeView === "locations"
+                        ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                        : "text-gray-600 hover:bg-gray-50"
                     }`}
                   >
                     Locations ({validLocations.length})
@@ -394,7 +442,9 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
                     <button
                       onClick={() => setActiveView("directions")}
                       className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                        activeView === "directions" ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50" : "text-gray-600 hover:bg-gray-50"
+                        activeView === "directions"
+                          ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                          : "text-gray-600 hover:bg-gray-50"
                       }`}
                     >
                       Directions
@@ -407,11 +457,15 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="text-gray-600">Distance:</span>
-                          <p className="font-semibold text-gray-900">{routeInfo.distance}</p>
+                          <p className="font-semibold text-gray-900">
+                            {routeInfo.distance}
+                          </p>
                         </div>
                         <div>
                           <span className="text-gray-600">Duration:</span>
-                          <p className="font-semibold text-gray-900">{routeInfo.duration}</p>
+                          <p className="font-semibold text-gray-900">
+                            {routeInfo.duration}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -424,15 +478,26 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
                           key={`${loc.place}-${index}`}
                           className="flex items-start space-x-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer"
                           onClick={() => {
-                            if (map?.flyTo) map.flyTo({ center: {lat:loc.lat,lng:loc.lng}, zoom: 14 });
+                            if (map?.flyTo)
+                              map.flyTo({
+                                center: { lat: loc.lat, lng: loc.lng },
+                                zoom: 14,
+                              });
                           }}
                         >
                           <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-semibold">
                             {index + 1}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate" title={loc.place}>{loc.place}</p>
-                            <p className="text-xs text-gray-500 mt-1">{loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}</p>
+                            <p
+                              className="text-sm font-medium text-gray-900 truncate"
+                              title={loc.place}
+                            >
+                              {loc.place}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}
+                            </p>
                           </div>
                         </div>
                       ))}
@@ -444,12 +509,21 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
                       {steps.length > 0 ? (
                         <div className="space-y-4">
                           {steps.map((step, index) => (
-                            <div key={index} className="flex items-start space-x-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200">
-                              <div className="flex-shrink-0 mt-1">{getManeuverIcon(step.maneuver)}</div>
+                            <div
+                              key={index}
+                              className="flex items-start space-x-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200"
+                            >
+                              <div className="flex-shrink-0 mt-1">
+                                {getManeuverIcon(step.maneuver)}
+                              </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 leading-5">{step.maneuver?.instruction || "Continue"}</p>
+                                <p className="text-sm font-medium text-gray-900 leading-5">
+                                  {step.maneuver?.instruction || "Continue"}
+                                </p>
                                 <p className="text-xs text-gray-500 mt-1">
-                                  {step.distance > 1000 ? `${(step.distance / 1000).toFixed(1)} km` : `${Math.round(step.distance)} m`}
+                                  {step.distance > 1000
+                                    ? `${(step.distance / 1000).toFixed(1)} km`
+                                    : `${Math.round(step.distance)} m`}
                                 </p>
                               </div>
                             </div>
@@ -470,14 +544,18 @@ const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: n
         )}
       </div>
 
-      <div ref={mapRef} className="flex-1 bg-gray-200" id="mappls-map-container" />
-      
-       {selectedLocation && (
+      <div
+        ref={mapRef}
+        className="flex-1 bg-gray-200"
+        id="mappls-map-container"
+      />
+
+      {selectedLocation && (
         <LocationCard
           location={selectedLocation}
           onClose={() => setSelectedLocation(null)} // Update state setter here
           style={{
-            position: 'fixed',
+            position: "fixed",
             left: cardPosition.x,
             top: cardPosition.y,
             zIndex: 1000,
