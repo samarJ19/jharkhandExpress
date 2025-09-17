@@ -98,33 +98,26 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [panelWidth, setPanelWidth] = useState(350);
-  const [hoveredLocation, setHoveredLocation] = useState<{ place: string; lat: number; lng: number; } | null>(null);
-  const [cardStyle, setCardStyle] = useState<React.CSSProperties>({});
+  // Rename this state variable
+const [selectedLocation, setSelectedLocation] = useState<{ place: string; lat: number; lng: number; } | null>(null);
   const [cardPosition, setCardPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   
-  // Fixed: Proper data extraction from the new structure
   const validLocations = useMemo(() => {
     if (!locationData?.data?.geocodes) {
-      console.log("No geocodes found in locationData:", locationData);
       return [];
     }
     
-    const locations = locationData.data.geocodes
-      .filter((geocode) => {
-        const hasValidCoords = geocode.lat && geocode.lon && 
-                              geocode.lat !== "null" && geocode.lon !== "null" &&
-                              geocode.lat !== null && geocode.lon !== null;
-        return hasValidCoords;
-      })
+    return locationData.data.geocodes
+      .filter((geocode) => 
+        geocode.lat && geocode.lon && 
+        geocode.lat !== "null" && geocode.lon !== "null"
+      )
       .map((geocode) => ({
         place: geocode.place,
         lat: parseFloat(geocode.lat!),
         lng: parseFloat(geocode.lon!),
       }));
-    
-    console.log("Valid locations processed:", locations);
-    return locations;
   }, [locationData]);
 
   const fetchToken = async (): Promise<string> => {
@@ -140,29 +133,26 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
         window.initMapCallback = () => {
           setTimeout(() => {
             if (mapRef.current && window.mappls) {
-              // Default center if no locations
-              const defaultCenter = [77.4126, 23.2599]; // Bhopal
-              let center = defaultCenter;
-              let zoom = 5; // Start with a lower zoom level
+              
+              // --- CORRECTED MAP CENTERING LOGIC ---
+              let centerCoords = { lat: 23.2599, lng: 77.4126 }; // Default to Bhopal
+              let zoom = 5;
 
               if (validLocations.length > 0) {
-                if (validLocations.length === 1) {
-                  // Single location - center on it with moderate zoom
-                  center = [validLocations[0].lng, validLocations[0].lat];
-                  zoom = 12;
-                } else {
-                  // Multiple locations - calculate center
-                  const avgLat = validLocations.reduce((sum, loc) => sum + loc.lat, 0) / validLocations.length;
-                  const avgLng = validLocations.reduce((sum, loc) => sum + loc.lng, 0) / validLocations.length;
-                  center = [avgLng, avgLat];
-                  zoom = 8; // Start with moderate zoom, will be adjusted by fitBounds
-                }
+                // Set center to the first valid location
+                centerCoords = {
+                  lat: validLocations[0].lat,
+                  lng: validLocations[0].lng,
+                };
+                // Adjust zoom based on number of locations
+                zoom = validLocations.length === 1 ? 14 : 10;
               }
 
               const mapInstance = new window.mappls.Map(mapRef.current, {
-                center,
+                center: centerCoords, // Pass the correctly structured object
                 zoom,
               });
+              // --- END OF CORRECTION ---
               
               setMap(mapInstance);
               setMapReady(true);
@@ -183,15 +173,14 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
       }
     };
     initMap();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
 
   const clearMapFeatures = () => {
-    // Clear markers
     markersRef.current.forEach((marker) => {
       if (marker && typeof marker.remove === "function") marker.remove();
     });
     markersRef.current = [];
-    // Clear route
     if (map) {
       try {
         if (map.getLayer && map.getLayer("route")) map.removeLayer("route");
@@ -202,114 +191,48 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
     }
   };
 
-  // Fix the createMarkers function for proper positioning
   const createMarkers = (locations: any[]) => {
     return locations.map((loc) => {
       const marker = new window.mappls.Marker({
         map: map,
         position: { lat: loc.lat, lng: loc.lng },
-        fitbounds: false, // We'll handle bounds manually
+        fitbounds: false,
       });
 
-      // Wait for marker to be added to DOM, then get its element
       setTimeout(() => {
-        const markerElement = marker.getElement ? marker.getElement() : 
-                             marker._element ? marker._element :
-                             document.querySelector(`[data-marker-id="${marker._id}"]`);
+        const markerElement = marker.getElement ? marker.getElement() : marker._element;
         
         if (markerElement) {
-          console.log("Found marker element:", markerElement);
-          
-          markerElement.addEventListener('mouseenter', (e: any) => {
-            console.log("Mouse entered marker!");
-            e.preventDefault();
+          // ---  START: MODIFIED EVENT LISTENER ---
+          // Change 'mouseenter' to 'click' and remove 'mouseleave'
+          markerElement.addEventListener('click', (e: MouseEvent) => {
             e.stopPropagation();
-            
             if (!mapRef.current) return;
-
             const mapRect = mapRef.current.getBoundingClientRect();
             const markerScreenPos = map.project([loc.lng, loc.lat]);
-
-            // Card dimensions
-            const CARD_WIDTH = 250;
-            const CARD_HEIGHT = 120;
-            const MARGIN = 15;
-
-            // Calculate absolute position on screen
-            let x = mapRect.left + markerScreenPos.x;
-            let y = mapRect.top + markerScreenPos.y;
-
-            // Smart positioning to avoid boundaries
-            // Check if card would go off right edge
-            if (x + CARD_WIDTH + MARGIN > window.innerWidth) {
-              x = x - CARD_WIDTH - MARGIN; // Position to the left of marker
-            } else {
-              x = x + MARGIN; // Position to the right of marker
-            }
-
-            // Check if card would go off bottom edge
-            if (y + CARD_HEIGHT + MARGIN > window.innerHeight) {
-              y = y - CARD_HEIGHT - MARGIN; // Position above marker
-            } else {
-              y = y + MARGIN; // Position below marker
-            }
-
-            // Ensure it doesn't go off left edge
-            x = Math.max(MARGIN, x);
-            // Ensure it doesn't go off top edge  
-            y = Math.max(MARGIN, y);
-
-            // Also ensure it doesn't go off right/bottom with the corrections
-            x = Math.min(window.innerWidth - CARD_WIDTH - MARGIN, x);
-            y = Math.min(window.innerHeight - CARD_HEIGHT - MARGIN, y);
-
-            setCardPosition({ x, y });
-            setHoveredLocation(loc);
-          });
-
-          markerElement.addEventListener('mouseleave', (e: any) => {
-            console.log("Mouse left marker!");
-            e.preventDefault();
-            e.stopPropagation();
             
-            // Add delay to prevent flickering
-            setTimeout(() => {
-              setHoveredLocation(null);
-            }, 150);
+            const CARD_WIDTH = 250, CARD_HEIGHT = 120, MARGIN = 15;
+            let x = mapRect.left + markerScreenPos.x + MARGIN;
+            let y = mapRect.top + markerScreenPos.y + MARGIN;
+            
+            if (x + CARD_WIDTH > window.innerWidth) x -= (CARD_WIDTH + 2 * MARGIN);
+            if (y + CARD_HEIGHT > window.innerHeight) y -= (CARD_HEIGHT + 2 * MARGIN);
+            
+            setCardPosition({ x: Math.max(MARGIN, x), y: Math.max(MARGIN, y) });
+            // Use the new state setter
+            setSelectedLocation(loc);
           });
-
-          markerElement.style.cursor = 'pointer';
-          markerElement.style.pointerEvents = 'auto';
+          // --- END: MODIFIED EVENT LISTENER ---
           
+          markerElement.style.cursor = 'pointer';
         } else {
           console.warn("Could not find marker DOM element for:", loc.place);
-          
-          // Fallback approach
-          setTimeout(() => {
-            const allMarkers = document.querySelectorAll('.mappls-marker, .mapboxgl-marker, [class*="marker"]');
-            console.log("All potential markers found:", allMarkers.length);
-            
-            if (allMarkers.length > 0) {
-              const lastMarker = allMarkers[allMarkers.length - 1] as HTMLElement;
-              lastMarker.addEventListener('mouseenter', () => {
-                console.log("Fallback: Mouse entered marker!");
-                setHoveredLocation(loc);
-              });
-              
-              lastMarker.addEventListener('mouseleave', () => {
-                console.log("Fallback: Mouse left marker!");
-                setTimeout(() => setHoveredLocation(null), 200);
-              });
-            }
-          }, 500);
         }
-      }, 100); // Give time for marker to be added to DOM
+      }, 100);
 
       return marker;
     });
   };
-
-
 
   // Main effect to draw markers and route based on props
   useEffect(() => {
@@ -320,10 +243,7 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
       setError("");
       setRouteInfo(null);
       setSteps([]);
-
       clearMapFeatures();
-
-      console.log("Processing valid locations:", validLocations);
 
       if (validLocations.length === 0) {
         setError("No valid locations with coordinates found.");
@@ -331,38 +251,29 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
         return;
       }
 
-      // Create markers from validLocations
       markersRef.current = createMarkers(validLocations);
 
-      // Handle route drawing for multiple locations
       if (validLocations.length > 1) {
-        const pathString = validLocations
-          .map((loc) => `${loc.lng},${loc.lat}`)
-          .join(";");
-        
-        console.log("Route path string:", pathString);
-        
+        const pathString = validLocations.map((loc) => `${loc.lng},${loc.lat}`).join(";");
         try {
           const directionsResponse = await axios.get(
             "http://localhost:5000/api/get-directions-multi",
-            {
-              params: { path: pathString },
-            }
+            { params: { path: pathString } }
           );
-          
-          console.log("Directions response:", directionsResponse.data);
+                    console.log("Full API Response:", directionsResponse.data);
+
           const route = directionsResponse.data.routes?.[0];
+          console.log("Extracted Route Object:", route);
 
           if (route && route.geometry) {
             drawRoute(route.geometry);
             setRouteInfo(formatRouteInfo(route.distance, route.duration));
-            const allSteps = route.legs?.reduce(
-              (allSteps: any[], leg: any) => [...allSteps, ...(leg.steps || [])],
-              []
-            ) || [];
+            const allSteps = route.legs?.reduce((acc: any[], leg: any) => [...acc, ...(leg.steps || [])], []) || [];
             setSteps(allSteps);
-            setActiveView("directions"); // Switch to directions when route is available
+            setActiveView("directions");
           } else {
+                        console.error("Route or route.geometry is missing!");
+
             setError("No route found connecting the locations.");
           }
         } catch (routeErr) {
@@ -370,9 +281,9 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
           setError("Failed to fetch route. Showing locations only.");
         }
       } else {
-        // Single location - center map on it
+        // If map didn't initialize at the right spot, this ensures it goes there.
         map.flyTo({
-          center: [validLocations[0].lng, validLocations[0].lat],
+          center: {lat:validLocations[0].lat,lng:validLocations[0].lng},
           zoom: 14,
         });
       }
@@ -386,58 +297,45 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
   const drawRoute = (routeGeoJSON: any) => {
     if (!map || !routeGeoJSON) return;
     try {
-      if (map.addSource) {
+      if (map.getSource('route')) {
+        map.getSource('route').setData(routeGeoJSON);
+      } else {
         map.addSource("route", { type: "geojson", data: routeGeoJSON });
         map.addLayer({
           id: "route",
           type: "line",
           source: "route",
           layout: { "line-join": "round", "line-cap": "round" },
-          paint: { "line-color": "#3b82f6", "line-width": 4 },
+          paint: { "line-color": "#3b82f6", "line-width": 6, "line-opacity": 0.8 },
         });
       }
     } catch (error) {
       console.error("Error drawing route:", error);
     }
   };
+  
   useEffect(() => {
-    // Give the browser's layout engine a moment to reflow the UI after a state change
     const resizeTimer = setTimeout(() => {
-      if (map && typeof map.resize === 'function') {
-        map.resize();
-      }
-    }, 300); // A 300ms delay is usually enough for CSS transitions to complete
-
+      if (map && typeof map.resize === 'function') map.resize();
+    }, 300);
     return () => clearTimeout(resizeTimer);
   }, [isCollapsed, isMaximized, map]);
   
-  const toggleCollapse = () => {
-    setIsCollapsed(!isCollapsed);
-  };
-
-  const toggleMaximize = () => {
-    setIsMaximized(!isMaximized);
-    if (!isMaximized) {
-      setPanelWidth(500);
-    } else {
-      setPanelWidth(350);
-    }
-  };
+  const toggleCollapse = () => setIsCollapsed(!isCollapsed);
+  const toggleMaximize = () => setIsMaximized(!isMaximized);
 
   const getPanelWidth = () => {
     if (isCollapsed) return 60;
     if (isMaximized) return Math.min(600, window.innerWidth * 0.5);
-    return panelWidth;
+    return 350;
   };
 
   return (
     <div className="flex w-full h-full bg-gray-100">
-      {/* Resizable Side Panel */}
       <div
-        className="bg-white shadow-lg z-10 flex flex-col border-r border-gray-200"
+        className="bg-white shadow-lg z-10 flex flex-col border-r border-gray-200 transition-all duration-300"
         style={{ width: `${getPanelWidth()}px`, minWidth: isCollapsed ? "60px" : "300px" }}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
           {!isCollapsed && (
             <h2 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -452,11 +350,7 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
                 className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors"
                 title={isMaximized ? "Minimize" : "Maximize"}
               >
-                {isMaximized ? (
-                  <Minimize2 className="w-4 h-4 text-gray-600" />
-                ) : (
-                  <Maximize2 className="w-4 h-4 text-gray-600" />
-                )}
+                {isMaximized ? <Minimize2 className="w-4 h-4 text-gray-600" /> : <Maximize2 className="w-4 h-4 text-gray-600" />}
               </button>
             )}
             <button
@@ -464,18 +358,13 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
               className="p-1.5 hover:bg-gray-200 rounded-lg transition-colors"
               title={isCollapsed ? "Expand" : "Collapse"}
             >
-              {isCollapsed ? (
-                <ChevronRight className="w-4 h-4 text-gray-600" />
-              ) : (
-                <ChevronLeft className="w-4 h-4 text-gray-600" />
-              )}
+              {isCollapsed ? <ChevronRight className="w-4 h-4 text-gray-600" /> : <ChevronLeft className="w-4 h-4 text-gray-600" />}
             </button>
           </div>
         </div>
 
         {!isCollapsed && (
           <>
-            {/* Loading and Error States */}
             {(isLoading || error) && (
               <div className="p-4 border-b border-gray-200">
                 {isLoading && (
@@ -485,23 +374,18 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
                   </div>
                 )}
                 {error && (
-                  <div className="text-red-600 text-sm p-3 bg-red-50 border border-red-200 rounded-lg">
-                    {error}
-                  </div>
+                  <div className="text-red-600 text-sm p-3 bg-red-50 border border-red-200 rounded-lg">{error}</div>
                 )}
               </div>
             )}
 
-            {/* Tab Navigation */}
             {validLocations.length > 0 && (
               <>
                 <div className="flex border-b border-gray-200">
                   <button
                     onClick={() => setActiveView("locations")}
                     className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                      activeView === "locations"
-                        ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
-                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      activeView === "locations" ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50" : "text-gray-600 hover:bg-gray-50"
                     }`}
                   >
                     Locations ({validLocations.length})
@@ -510,19 +394,14 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
                     <button
                       onClick={() => setActiveView("directions")}
                       className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-                        activeView === "directions"
-                          ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                        activeView === "directions" ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50" : "text-gray-600 hover:bg-gray-50"
                       }`}
                     >
                       Directions
                     </button>
                   )}
                 </div>
-
-                {/* Content Area */}
                 <div className="flex-1 overflow-y-auto">
-                  {/* Route Info */}
                   {routeInfo && (
                     <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-gray-200">
                       <div className="grid grid-cols-2 gap-4 text-sm">
@@ -538,61 +417,39 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
                     </div>
                   )}
 
-                  {/* Locations View */}
                   {activeView === "locations" && (
-                    <div className="p-4">
-                      <div className="space-y-3">
-                        {validLocations.map((loc, index) => (
-                          <div
-                            key={`${loc.place}-${index}`}
-                            className="flex items-start space-x-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer"
-                            onClick={() => {
-                              if (map && map.flyTo) {
-                                map.flyTo({
-                                  center: [loc.lng, loc.lat],
-                                  zoom: 15,
-                                });
-                              }
-                            }}
-                          >
-                            <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-semibold">
-                              {index + 1}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate" title={loc.place}>
-                                {loc.place}
-                              </p>
-                              <p className="text-xs text-gray-500 mt-1">
-                                {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}
-                              </p>
-                            </div>
+                    <div className="p-4 space-y-3">
+                      {validLocations.map((loc, index) => (
+                        <div
+                          key={`${loc.place}-${index}`}
+                          className="flex items-start space-x-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer"
+                          onClick={() => {
+                            if (map?.flyTo) map.flyTo({ center: {lat:loc.lat,lng:loc.lng}, zoom: 14 });
+                          }}
+                        >
+                          <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-semibold">
+                            {index + 1}
                           </div>
-                        ))}
-                      </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900 truncate" title={loc.place}>{loc.place}</p>
+                            <p className="text-xs text-gray-500 mt-1">{loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
 
-                  {/* Directions View */}
                   {activeView === "directions" && (
                     <div className="p-4">
                       {steps.length > 0 ? (
                         <div className="space-y-4">
                           {steps.map((step, index) => (
-                            <div
-                              key={index}
-                              className="flex items-start space-x-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
-                            >
-                              <div className="flex-shrink-0 mt-1">
-                                {getManeuverIcon(step.maneuver)}
-                              </div>
+                            <div key={index} className="flex items-start space-x-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200">
+                              <div className="flex-shrink-0 mt-1">{getManeuverIcon(step.maneuver)}</div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 leading-5">
-                                  {step.maneuver?.instruction || "Continue"}
-                                </p>
+                                <p className="text-sm font-medium text-gray-900 leading-5">{step.maneuver?.instruction || "Continue"}</p>
                                 <p className="text-xs text-gray-500 mt-1">
-                                  {step.distance > 1000
-                                    ? `${(step.distance / 1000).toFixed(1)} km`
-                                    : `${Math.round(step.distance)} m`}
+                                  {step.distance > 1000 ? `${(step.distance / 1000).toFixed(1)} km` : `${Math.round(step.distance)} m`}
                                 </p>
                               </div>
                             </div>
@@ -612,18 +469,18 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
           </>
         )}
       </div>
-      {/* Map Container */}
+
       <div ref={mapRef} className="flex-1 bg-gray-200" id="mappls-map-container" />
-      {hoveredLocation && (
+      
+       {selectedLocation && (
         <LocationCard
-          location={hoveredLocation}
-          onClose={() => setHoveredLocation(null)}
+          location={selectedLocation}
+          onClose={() => setSelectedLocation(null)} // Update state setter here
           style={{
             position: 'fixed',
             left: cardPosition.x,
             top: cardPosition.y,
             zIndex: 1000,
-            pointerEvents: 'auto',
           }}
         />
       )}

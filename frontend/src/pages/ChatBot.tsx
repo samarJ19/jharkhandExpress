@@ -19,18 +19,20 @@ import {
 } from "lucide-react";
 import DirectionsMap from "./DirectionBetweenMultiple";
 import FeatureComponent from "../Component/FeatureComponent"; // Import the new component
+import { MapLoadingShimmer } from "../Component/MapLoadingState";
+
 
 export default function Chatbot() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [poiData, setPoiData] = useState(null); // Added state for POI data
+  const [mapLoading, setMapLoading] = useState(false); // Added state for map loading
   const [messages, setMessages] = useState([
     {
       id: 1,
       type: "bot",
-      content:
-        "Hey there! I can help you plan your trip. Just tell me where you'd like to go and what you're interested in.",
+      content: "",
       timestamp: new Date(),
     },
   ]);
@@ -51,6 +53,7 @@ export default function Chatbot() {
     setLoading(true);
     setError("");
     setPoiData(null); // Reset POI data for new request
+    setMapLoading(false); // Reset map loading state
 
     try {
       const response = await fetch("http://localhost:5000/stream-itinerary", {
@@ -99,11 +102,9 @@ export default function Chatbot() {
         }
       }
 
-      // After streaming is complete, extract POI data
-      console.log("Streaming complete. Itinerary:", botContent);
-      
       if (botContent.trim()) {
         try {
+          setMapLoading(true); // Start map loading
           const poiResponse = await fetch("https://promptyatra-1052532391820.europe-west1.run.app/extract-poi-geocodes", {
             method: "POST",
             headers: { 
@@ -118,11 +119,16 @@ export default function Chatbot() {
           }
           
           const poiResponseData = await poiResponse.json();
-          console.log("GeoCode data:", poiResponseData);
-          setPoiData(poiResponseData);
+          
+          // Simulate a slight delay to show the loading screen
+          setTimeout(() => {
+            setPoiData(poiResponseData);
+            setMapLoading(false); // End map loading
+          }, 1500); // 1.5 second delay to ensure smooth loading transition
+          
         } catch (poiError) {
           console.error("Error extracting POI data:", poiError);
-          // Don't show error to user for POI extraction failure, just log it
+          setMapLoading(false); // End map loading on error
         }
       }
 
@@ -205,7 +211,26 @@ export default function Chatbot() {
           {/* Chat Messages */}
           <div className="flex-1 overflow-y-auto p-6">
             <div className="max-w-4xl mx-auto space-y-6">
-              {messages.map((message) => (
+              {/* Welcome Screen - Show only when there's just the initial bot message */}
+              {messages.length === 1 && messages[0].type === "bot" && messages[0].content === "" && (
+                <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-6">
+                  {/* Travel Illustration */}
+                  <div className="relative">
+                   <img src="jharkhandIntro.jpeg" alt="Travel Illustration" className="w-64 h-64 object-contain rounded-full" />
+                  </div>
+                  
+                  {/* Welcome Text */}
+                  <div className="text-center space-y-4">
+                    <h1 className="text-4xl font-bold text-gray-900">Where to today?</h1>
+                    <p className="text-lg text-gray-600 max-w-md">
+                      Hey there, I'm here to assist you in planning your experience. Ask me anything travel related.
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              {/* Regular chat messages - Show when there are multiple messages or conversation has started */}
+              {!(messages.length === 1 && messages[0].type === "bot" && messages[0].content === "") && messages.map((message) => (
                 <div key={message.id}>
                   {message.type === "bot" ? (
                     <div className="flex items-start space-x-4">
@@ -335,7 +360,7 @@ export default function Chatbot() {
               ))}
 
               {/* Loading indicator */}
-              {loading && (
+              {!(messages.length === 1 && messages[0].type === "bot" && messages[0].content === "") && loading && (
                 <div className="flex items-start space-x-4">
                   <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
                     <MessageCircle className="w-4 h-4 text-gray-600" />
@@ -404,11 +429,14 @@ export default function Chatbot() {
           </div>
         </div>
 
-        {/* Right Panel - Conditionally shows FeatureComponent or DirectionsMap */}
+        {/* Right Panel - Conditionally shows FeatureComponent, MapLoadingShimmer, or DirectionsMap */}
         {showRightPanel && (
           <div className="w-1/2 bg-white">
-            {poiData ? (
-              // Show map when POI data is available
+            {mapLoading ? (
+              // Show loading shimmer when map is loading
+              <MapLoadingShimmer />
+            ) : poiData ? (
+              // Show map when POI data is available and not loading
               <div className="h-full">
                 <DirectionsMap locationData={poiData} />
               </div>
