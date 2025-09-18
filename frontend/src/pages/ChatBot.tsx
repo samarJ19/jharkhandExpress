@@ -37,14 +37,14 @@ export default function Chatbot() {
   ]);
 
   // Streaming itinerary from backend
-  const handleSubmit = async (e?: React.MouseEvent | React.KeyboardEvent) => {
+  const handleSubmit = async (e?: React.FormEvent | React.MouseEvent | React.KeyboardEvent) => {
     e?.preventDefault();
     if (!input.trim()) return;
 
     // Add user message to chat
     const userMessage = {
       id: messages.length + 1,
-      type: "user",
+      type: "user" as const,
       content: input,
       timestamp: new Date(),
     };
@@ -54,14 +54,24 @@ export default function Chatbot() {
     setPoiData(null); // Reset POI data for new request
     setMapLoading(false); // Reset map loading state
 
+    // Store input value before clearing it
+    const currentInput = input;
+    setInput(""); // Clear input immediately after storing
+
     try {
       const response = await fetch("http://localhost:5000/stream-itinerary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_prompt: input }),
+        body: JSON.stringify({ user_prompt: currentInput }),
       });
 
-      if (!response.body) throw new Error("No response body");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      if (!response.body) {
+        throw new Error("No response body available");
+      }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -69,13 +79,13 @@ export default function Chatbot() {
       let botContent = "";
 
       // Add a placeholder bot message for streaming
-      const botMessageId = messages.length + 2; // +2 because we added user message
+      const botMessageId = Date.now(); // Use timestamp for unique ID
       setMessages((prev) => [
         ...prev,
         {
           id: botMessageId,
-          type: "bot",
-          content: "Jharkhand Treasure Bot is typing...",
+          type: "bot" as const,
+          content: "",
           timestamp: new Date(),
         },
       ]);
@@ -85,7 +95,8 @@ export default function Chatbot() {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
         if (value) {
-          botContent += decoder.decode(value);
+          const chunk = decoder.decode(value);
+          botContent += chunk;
           // Update the last bot message with streamed content
           setMessages((prev) => {
             const updated = [...prev];
@@ -117,7 +128,7 @@ export default function Chatbot() {
               },
               body: JSON.stringify({ itinerary: botContent }),
             }
-          ); 
+          );
 
           if (!poiResponse.ok) {
             throw new Error(`POI extraction failed: ${poiResponse.status}`);
@@ -141,15 +152,14 @@ export default function Chatbot() {
       setMessages((prev) => [
         ...prev,
         {
-          id: prev.length + 1,
-          type: "bot",
+          id: Date.now(),
+          type: "bot" as const,
           content: `Sorry, I couldn't process that request. Mind trying again?`,
           timestamp: new Date(),
         },
       ]);
     } finally {
       setLoading(false);
-      setInput("");
     }
   };
 
