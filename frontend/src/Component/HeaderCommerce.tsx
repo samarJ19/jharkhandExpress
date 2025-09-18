@@ -1,4 +1,5 @@
-import { CartIcon, LogoIcon, SearchIcon, WishlistIcon } from "./IconsCommerce";
+import { LogoIcon, SearchIcon, WishlistIcon } from "./IconsCommerce";
+import { Cart } from "./Cart";
 
 export const Header: React.FC = () => {
   const navLinks = ["Home", "Handicrafts", "Textiles", "Art", "About", "Contact"];
@@ -31,9 +32,9 @@ export const Header: React.FC = () => {
             <button className="flex cursor-pointer items-center justify-center rounded-md h-11 bg-secondary text-text-primary min-w-0 px-3 hover:bg-[#e9e6e3] transition-colors">
                 <WishlistIcon />
             </button>
-            <button className="flex cursor-pointer items-center justify-center rounded-md h-11 bg-secondary text-text-primary min-w-0 px-3 hover:bg-[#e9e6e3] transition-colors">
-                <CartIcon />
-            </button>
+            <div className="flex cursor-pointer items-center justify-center rounded-md h-11 bg-secondary text-text-primary min-w-0 px-3 hover:bg-[#e9e6e3] transition-colors">
+                <Cart />
+            </div>
         </div>
         <div 
           className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-11 border-2 border-white shadow-md" 
