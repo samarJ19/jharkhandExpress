@@ -9,6 +9,7 @@ import {
   MapPin,
 } from "lucide-react";
 import LocationCard from "../Component/LocationCard";
+import { Link } from "react-router-dom";
 
 interface Geocode {
   place: string;
@@ -104,7 +105,6 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
   // Panel state management
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
-  const [panelWidth, setPanelWidth] = useState(350);
   // Rename this state variable
   const [selectedLocation, setSelectedLocation] = useState<{
     place: string;
@@ -477,6 +477,7 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
                         <div
                           key={`${loc.place}-${index}`}
                           className="flex items-start space-x-3 p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors cursor-pointer"
+                          // This outer onClick still flies to the location on the main map
                           onClick={() => {
                             if (map?.flyTo)
                               map.flyTo({
@@ -489,12 +490,22 @@ const DirectionsMap: React.FC<{ locationData: LocationData }> = ({
                             {index + 1}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p
-                              className="text-sm font-medium text-gray-900 truncate"
-                              title={loc.place}
+                            {/* --- START OF MODIFICATION --- */}
+                            <Link
+                              to={`/street-view?lat=${loc.lat}&lng=${loc.lng}`}
+                              target="_blank" // This opens the link in a new tab
+                              rel="noopener noreferrer" // Recommended for security with target="_blank"
+                              // Stop propagation to prevent the parent div's onClick from firing
+                              onClick={(e) => e.stopPropagation()}
                             >
-                              {loc.place}
-                            </p>
+                              <p
+                                className="text-sm font-medium text-gray-900 truncate hover:text-blue-700 hover:underline"
+                                title={loc.place}
+                              >
+                                {loc.place}
+                              </p>
+                            </Link>
+                            {/* --- END OF MODIFICATION --- */}
                             <p className="text-xs text-gray-500 mt-1">
                               {loc.lat.toFixed(4)}, {loc.lng.toFixed(4)}
                             </p>
