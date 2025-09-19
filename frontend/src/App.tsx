@@ -3,6 +3,7 @@ import Home from "./pages/Home";
 import Chatbot from "./pages/ChatBot";
 import JharkhandTreasuresPage from "./pages/JharkhandTreasure";
 import StreetViewMap from "./pages/StreetView";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
             element={<JharkhandTreasuresPage />}
           />
           <Route path="/street-view" element={<StreetViewMap />} />
+          <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
       </Router>
     </>
