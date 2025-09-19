@@ -22,6 +22,9 @@ app.use(cors(corsOptions));
 app.use(express.json()); // Add JSON middleware
 app.use(bodyParser.json()); // Also keep the existing bodyParser
 
+import router from './adminRoute';
+
+app.use('/api/admin', router);
 
 app.get("/api/get-mappls-token", async (req: Request, res: Response) => {
     
