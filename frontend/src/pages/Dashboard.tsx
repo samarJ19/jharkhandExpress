@@ -1,55 +1,51 @@
+
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
-import { TrendingUp, Users, MapPin, DollarSign, Star, ThumbsUp, ThumbsDown, Minus, Calendar, Award, Eye, Camera, Activity } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
+import { TrendingUp, Users, MapPin, DollarSign, Star, ThumbsUp, ThumbsDown, Calendar, Award, Eye, Camera, Activity, FileText, AlertTriangle, Shield, CheckCircle, Clock, Download, Filter, RefreshCw, Bell, Settings, Database, BarChart3, Target, Briefcase, Globe, Phone, Mail, MessageSquare, Search, Menu, X } from 'lucide-react';
 
 const Dashboard = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedMetric, setSelectedMetric] = useState(null);
 
   useEffect(() => {
-    setIsLoaded(true);
+    const timer = setTimeout(() => setIsLoaded(true), 300);
+    return () => clearTimeout(timer);
   }, []);
 
-  // Mock data for charts
+  // Enhanced realistic data
   const touristVisitsData = [
-    { location: 'Netarhat', visitors: 15420, revenue: 2850000 },
-    { location: 'Betla National Park', visitors: 12800, revenue: 2340000 },
-    { location: 'Hundru Falls', visitors: 18650, revenue: 1980000 },
-    { location: 'Deoghar', visitors: 25100, revenue: 4200000 },
-    { location: 'Patratu Valley', visitors: 9800, revenue: 1560000 },
-    { location: 'Ranchi Hill', visitors: 11200, revenue: 1890000 }
+    { location: 'Deoghar Temple', visitors: 2850000, revenue: 42.75, satisfaction: 94 },
+    { location: 'Parasnath Hills', visitors: 450000, revenue: 6.75, satisfaction: 88 },
+    { location: 'Netarhat Hill Station', visitors: 320000, revenue: 4.8, satisfaction: 91 },
+    { location: 'Hundru Falls', visitors: 280000, revenue: 4.2, satisfaction: 89 },
+    { location: 'Betla National Park', visitors: 185000, revenue: 3.7, satisfaction: 87 },
+    { location: 'Ranchi Rock Garden', visitors: 165000, revenue: 3.3, satisfaction: 85 }
   ];
 
-  const monthlyRevenueData = [
-    { month: 'Jan', hotels: 12, marketplace: 4.5, guides: 1.2, total: 17.7 },
-    { month: 'Feb', hotels: 14.5, marketplace: 5.2, guides: 1.5, total: 21.2 },
-    { month: 'Mar', hotels: 18, marketplace: 6.8, guides: 1.8, total: 26.6 },
-    { month: 'Apr', hotels: 22, marketplace: 8.5, guides: 2.2, total: 32.7 },
-    { month: 'May', hotels: 19.5, marketplace: 7.2, guides: 1.95, total: 28.65 },
-    { month: 'Jun', hotels: 16.5, marketplace: 5.9, guides: 1.65, total: 24.05 }
+  const monthlyTrendsData = [
+    { month: 'Apr', tourists: 385, revenue: 57.75, digital: 68, infrastructure: 72 },
+    { month: 'May', tourists: 420, revenue: 63.0, digital: 71, infrastructure: 75 },
+    { month: 'Jun', tourists: 315, revenue: 47.25, digital: 74, infrastructure: 78 },
+    { month: 'Jul', tourists: 290, revenue: 43.5, digital: 76, infrastructure: 80 },
+    { month: 'Aug', tourists: 350, revenue: 52.5, digital: 79, infrastructure: 82 },
+    { month: 'Sep', tourists: 380, revenue: 57.0, digital: 82, infrastructure: 85 }
   ];
 
-  const sentimentData = [
-    { name: 'Positive', value: 68, color: '#10B981', count: 2856 },
-    { name: 'Neutral', value: 22, color: '#F59E0B', count: 924 },
-    { name: 'Negative', value: 10, color: '#EF4444', count: 420 }
+  const departmentMetrics = [
+    { department: 'Tourism Promotion', budget: 125, spent: 98, efficiency: 92, projects: 8 },
+    { department: 'Heritage Conservation', budget: 85, spent: 67, efficiency: 88, projects: 5 },
+    { department: 'Infrastructure Dev', budget: 65, spent: 58, efficiency: 85, projects: 12 },
+    { department: 'Digital Initiatives', budget: 35, spent: 28, efficiency: 91, projects: 6 },
+    { department: 'Staff Training', budget: 25, spent: 23, efficiency: 89, projects: 4 }
   ];
 
-  const topDestinationsData = [
-    { destination: 'Deoghar', satisfaction: 92, visits: 25100, avgStay: 2.5, rating: 4.6 },
-    { destination: 'Hundru Falls', satisfaction: 89, visits: 18650, avgStay: 1.2, rating: 4.5 },
-    { destination: 'Netarhat', satisfaction: 94, visits: 15420, avgStay: 3.1, rating: 4.7 },
-    { destination: 'Betla National Park', satisfaction: 87, visits: 12800, avgStay: 2.8, rating: 4.4 },
-    { destination: 'Ranchi Hill', satisfaction: 85, visits: 11200, avgStay: 1.5, rating: 4.2 }
-  ];
-
-  const userRequirementsData = [
-    { requirement: 'Better Transportation', count: 420, percentage: 28, priority: 'High', trend: '+5%' },
-    { requirement: 'More Local Guides', count: 380, percentage: 25, priority: 'High', trend: '+12%' },
-    { requirement: 'Improved Accommodations', count: 290, percentage: 19, priority: 'Medium', trend: '+3%' },
-    { requirement: 'Digital Payments', count: 210, percentage: 14, priority: 'Medium', trend: '+8%' },
-    { requirement: 'Multi-language Support', count: 180, percentage: 12, priority: 'Low', trend: '-2%' },
-    { requirement: 'Safety Measures', count: 20, percentage: 2, priority: 'Low', trend: '+1%' }
+  const liveAlerts = [
+    { type: 'critical', title: 'Infrastructure Alert', message: 'Road maintenance required at Hundru Falls access route', time: '2h ago', priority: 'High' },
+    { type: 'warning', title: 'Capacity Warning', message: 'Deoghar temple complex approaching weekend capacity limits', time: '4h ago', priority: 'Medium' },
+    { type: 'success', title: 'Project Update', message: 'Digital kiosk installation completed at Parasnath Hills', time: '6h ago', priority: 'Low' },
+    { type: 'info', title: 'Policy Update', message: 'New sustainable tourism guidelines released by Ministry', time: '1d ago', priority: 'Medium' }
   ];
 
   type StatCardProps = {
@@ -57,127 +53,146 @@ const Dashboard = () => {
     value: string | number;
     change: number;
     icon: React.ElementType;
-    color: string;
     subtitle?: string;
+    color?: string;
+    delay?: number;
   };
 
-  const StatCard: React.FC<StatCardProps> = ({ title, value, change, icon: Icon, color, subtitle }) => (
-    <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 transform hover:scale-105 transition-all duration-300 hover:shadow-2xl relative overflow-hidden">
-      <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-${color}-400 to-${color}-600`}></div>
-      <div className="flex items-center justify-between">
+  const StatCard: React.FC<StatCardProps> = ({ title, value, change, icon: Icon, subtitle, color = 'teal', delay = 0 }) => (
+    <div 
+      className={`bg-white rounded-2xl p-6 shadow-xl border border-gray-100 transform transition-all duration-700 hover:scale-105 hover:shadow-2xl ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+      }`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      <div className="flex items-start justify-between">
         <div className="flex-1">
-          <div className="flex items-center mb-2">
-            <div className={`p-2 rounded-lg bg-${color}-50 mr-3`}>
-              <Icon className={`w-5 h-5 text-${color}-600`} />
+          <div className="flex items-center mb-4">
+            <div className={`p-3 rounded-xl bg-${color}-50 mr-4 transform transition-transform duration-300 hover:rotate-6`}>
+              <Icon className={`w-6 h-6 text-${color}-600`} />
             </div>
-            <p className="text-gray-700 text-sm font-medium">{title}</p>
+            <div>
+              <p className="text-gray-600 text-sm font-medium mb-1">{title}</p>
+              <p className="text-3xl font-bold text-gray-900">{value}</p>
+            </div>
           </div>
-          <p className="text-3xl font-bold text-gray-900 mb-1">{value}</p>
-          {subtitle && <p className="text-xs text-gray-500 mb-2">{subtitle}</p>}
+          {subtitle && <p className="text-sm text-gray-500 mb-3">{subtitle}</p>}
           <div className="flex items-center">
-            <div className={`flex items-center px-2 py-1 rounded-full ${change >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-              <TrendingUp className={`w-3 h-3 mr-1 ${change >= 0 ? 'text-green-600' : 'text-red-600 rotate-180'}`} />
-              <span className={`text-xs font-semibold ${change >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+            <div className={`flex items-center px-3 py-1 rounded-full ${change >= 0 ? 'bg-teal-50' : 'bg-red-50'}`}>
+              <TrendingUp className={`w-4 h-4 mr-1 ${change >= 0 ? 'text-teal-600' : 'text-red-500 rotate-180'}`} />
+              <span className={`text-sm font-semibold ${change >= 0 ? 'text-teal-700' : 'text-red-600'}`}>
                 {change >= 0 ? '+' : ''}{change}%
               </span>
             </div>
-            <span className="text-xs text-gray-500 ml-2">vs last month</span>
+            <span className="text-sm text-gray-500 ml-3">vs last period</span>
           </div>
         </div>
       </div>
     </div>
   );
 
-  const CustomTooltip = ({
-    active,
-    payload,
-    label,
-  }: {
-    active?: boolean;
-    payload?: Array<any>;
-    label?: string;
-  }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white p-4 rounded-xl shadow-2xl border border-gray-200">
-          <p className="font-semibold text-gray-800 mb-2">{`Month: ${label}`}</p>
-          {payload.map((entry, index) => (
-            <div key={index} className="flex items-center mb-1">
-              <div 
-                className="w-3 h-3 rounded-full mr-2" 
-                style={{ backgroundColor: entry.color }}
-              ></div>
-              <span className="text-sm text-gray-600 capitalize mr-2">{entry.dataKey}:</span>
-              <span className="text-sm font-semibold text-gray-800">₹{entry.value}L</span>
-            </div>
-          ))}
-          <div className="border-t pt-2 mt-2">
-            <span className="text-sm font-bold text-gray-800">
-              Total: ₹{payload.reduce((sum: number, entry: any) => sum + entry.value, 0).toFixed(1)}L
+  const AlertCard = ({ alert, index }: { alert: typeof liveAlerts[number]; index: number }) => (
+    <div 
+      className={`p-5 rounded-xl border-l-4 transition-all duration-500 hover:shadow-lg transform hover:-translate-y-1 ${
+        alert.type === 'critical' ? 'bg-red-50 border-red-500 hover:bg-red-100' :
+        alert.type === 'warning' ? 'bg-yellow-50 border-yellow-500 hover:bg-yellow-100' :
+        alert.type === 'success' ? 'bg-teal-50 border-teal-500 hover:bg-teal-100' :
+        'bg-blue-50 border-blue-500 hover:bg-blue-100'
+      } ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}
+      style={{ transitionDelay: `${index * 100}ms` }}
+    >
+      <div className="flex items-start">
+        <div className="flex-shrink-0 mr-4">
+          {alert.type === 'critical' && <AlertTriangle className="w-6 h-6 text-red-500" />}
+          {alert.type === 'warning' && <Clock className="w-6 h-6 text-yellow-500" />}
+          {alert.type === 'success' && <CheckCircle className="w-6 h-6 text-teal-500" />}
+          {alert.type === 'info' && <FileText className="w-6 h-6 text-blue-500" />}
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="font-semibold text-gray-800">{alert.title}</h4>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              alert.priority === 'High' ? 'bg-red-100 text-red-700' :
+              alert.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+              'bg-gray-100 text-gray-700'
+            }`}>
+              {alert.priority}
             </span>
           </div>
+          <p className="text-sm text-gray-700 mb-2">{alert.message}</p>
+          <p className="text-xs text-gray-500">{alert.time}</p>
         </div>
-      );
-    }
-    return null;
-  };
-
-  const SentimentCard = ({ sentiment, index }: { sentiment: typeof sentimentData[number]; index: number }) => (
-    <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl p-6 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center">
-          <div 
-            className="w-4 h-4 rounded-full mr-3"
-            style={{ backgroundColor: sentiment.color }}
-          ></div>
-          <h3 className="font-semibold text-gray-800">{sentiment.name}</h3>
-        </div>
-        <div className="flex items-center">
-          {sentiment.name === 'Positive' && <ThumbsUp className="w-5 h-5 text-green-600" />}
-          {sentiment.name === 'Neutral' && <Minus className="w-5 h-5 text-yellow-600" />}
-          {sentiment.name === 'Negative' && <ThumbsDown className="w-5 h-5 text-red-600" />}
-        </div>
-      </div>
-      <div className="text-center">
-        <p className="text-4xl font-bold mb-2" style={{ color: sentiment.color }}>{sentiment.value}%</p>
-        <p className="text-sm text-gray-600">{sentiment.count.toLocaleString()} responses</p>
-      </div>
-      <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
-        <div 
-          className="h-2 rounded-full transition-all duration-1000 ease-out"
-          style={{ 
-            backgroundColor: sentiment.color, 
-            width: `${sentiment.value}%`,
-            animationDelay: `${index * 200}ms`
-          }}
-        ></div>
       </div>
     </div>
+  );
+
+  type QuickActionButtonProps = {
+    icon: React.ElementType;
+    title: string;
+    description: string;
+    onClick?: () => void;
+    delay?: number;
+  };
+
+  const QuickActionButton: React.FC<QuickActionButtonProps> = ({ icon: Icon, title, description, onClick, delay = 0 }) => (
+    <button
+      onClick={onClick}
+      className={`w-full p-4 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 hover:from-teal-50 hover:to-teal-100 border border-gray-200 hover:border-teal-200 transition-all duration-300 text-left group transform hover:scale-105 hover:shadow-lg ${
+        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      }`}
+      style={{ transitionDelay: `${delay}ms` }}
+    >
+      <div className="flex items-center mb-3">
+        <div className="p-2 rounded-lg bg-teal-100 group-hover:bg-teal-200 transition-colors mr-3">
+          <Icon className="w-5 h-5 text-teal-600" />
+        </div>
+        <h3 className="font-semibold text-gray-800 group-hover:text-teal-700 transition-colors">{title}</h3>
+      </div>
+      <p className="text-sm text-gray-600">{description}</p>
+    </button>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50">
       {/* Enhanced Header */}
-      <div className="bg-white shadow-2xl border-b-4 border-orange-500 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-blue-500/5"></div>
-        <div className="max-w-7xl mx-auto px-6 py-8 relative">
+      <div className="bg-white shadow-2xl border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
-                Jharkhand Tourism Dashboard
-              </h1>
-              <p className="text-gray-600 text-lg">Government Analytics & Insights Platform</p>
-              <div className="flex items-center mt-2 text-sm text-gray-500">
-                <Activity className="w-4 h-4 mr-2" />
-                <span>Real-time monitoring • Live updates • Data-driven insights</span>
+            <div className="flex items-center">
+              <div className="p-3 rounded-xl bg-teal-500 mr-4">
+                <Globe className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-teal-600 bg-clip-text text-transparent">
+                  Jharkhand Tourism Analytics
+                </h1>
+                <p className="text-gray-600 text-sm">Government Dashboard • Department of Tourism</p>
+                <div className="flex items-center mt-1">
+                  <div className="w-2 h-2 bg-teal-500 rounded-full mr-2 animate-pulse"></div>
+                  <span className="text-xs text-teal-600 font-medium">Live Data • Real-time Updates</span>
+                </div>
               </div>
             </div>
-            <div className="text-right bg-white/80 backdrop-blur-sm rounded-xl p-4 shadow-lg">
-              <p className="text-sm text-gray-600">Last Updated</p>
-              <p className="font-bold text-gray-800 text-lg">Sept 19, 2025</p>
-              <div className="flex items-center justify-end mt-1">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                <span className="text-xs text-green-600 font-medium">Live</span>
+
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
+                <button className="p-3 rounded-xl bg-gray-100 hover:bg-teal-100 text-gray-600 hover:text-teal-600 transition-all duration-300 hover:scale-110">
+                  <Search className="w-5 h-5" />
+                </button>
+                <button className="p-3 rounded-xl bg-gray-100 hover:bg-teal-100 text-gray-600 hover:text-teal-600 transition-all duration-300 hover:scale-110 relative">
+                  <Bell className="w-5 h-5" />
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                </button>
+                <button className="p-3 rounded-xl bg-gray-100 hover:bg-teal-100 text-gray-600 hover:text-teal-600 transition-all duration-300 hover:scale-110">
+                  <Download className="w-5 h-5" />
+                </button>
+                <button className="p-3 rounded-xl bg-gray-100 hover:bg-teal-100 text-gray-600 hover:text-teal-600 transition-all duration-300 hover:scale-110">
+                  <Settings className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-4 border border-teal-200">
+                <p className="text-sm text-teal-700 font-medium">Last Updated</p>
+                <p className="font-bold text-teal-800">Sept 19, 2025 • 14:30</p>
               </div>
             </div>
           </div>
@@ -185,61 +200,123 @@ const Dashboard = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Enhanced Key Statistics */}
-        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 transition-all duration-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+        {/* Key Performance Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <StatCard 
-            title="Total Tourists This Year" 
-            value="93,970" 
-            change={15.2} 
+            title="Annual Visitors" 
+            value="4.65M" 
+            change={12.5} 
             icon={Users} 
-            color="blue"
-            subtitle="Across all destinations"
+            subtitle="FY 2024-25 Target: 5M"
+            color="teal"
+            delay={0}
           />
           <StatCard 
-            title="Total Revenue Generated" 
-            value="₹14.82 Cr" 
-            change={22.8} 
+            title="Revenue Generated" 
+            value="₹698 Cr" 
+            change={18.3} 
             icon={DollarSign} 
-            color="green"
-            subtitle="YTD performance"
+            subtitle="Target: ₹750 Cr"
+            color="emerald"
+            delay={100}
           />
           <StatCard 
-            title="Active Destinations" 
-            value="28" 
+            title="Employment Created" 
+            value="9,200" 
             change={8.5} 
-            icon={MapPin} 
-            color="purple"
-            subtitle="Registered locations"
+            icon={Briefcase} 
+            subtitle="Direct & Indirect Jobs"
+            color="blue"
+            delay={200}
           />
           <StatCard 
-            title="Average Satisfaction" 
-            value="89.2%" 
-            change={5.1} 
-            icon={Star} 
-            color="orange"
-            subtitle="Based on reviews"
+            title="Digital Adoption" 
+            value="82.3%" 
+            change={15.2} 
+            icon={Activity} 
+            subtitle="Platform Usage Rate"
+            color="purple"
+            delay={300}
           />
         </div>
 
-        {/* Enhanced Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Tourist Visits by Location */}
-          <div className={`bg-white rounded-2xl p-6 shadow-xl border border-gray-100 transition-all duration-700 delay-200 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-                <div className="p-2 bg-blue-50 rounded-lg mr-3">
-                  <MapPin className="w-5 h-5 text-blue-600" />
+        {/* Main Dashboard Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+          {/* Priority Alerts */}
+          <div className={`lg:col-span-2 bg-white rounded-2xl p-8 shadow-xl border border-gray-100 transition-all duration-700 ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                <div className="p-3 rounded-xl bg-red-100 mr-4">
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
                 </div>
-                Tourist Visits by Location
+                Priority Alerts
               </h2>
-              <div className="text-sm text-gray-500">Last 6 months</div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-500">Auto-refresh</span>
+                <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
+              </div>
             </div>
-            <ResponsiveContainer width="100%" height={320}>
-              <BarChart data={touristVisitsData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <div className="space-y-4">
+              {liveAlerts.map((alert, index) => (
+                <AlertCard key={index} alert={alert} index={index} />
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className={`bg-white rounded-2xl p-8 shadow-xl border border-gray-100 transition-all duration-700 ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+            <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center">
+              <div className="p-3 rounded-xl bg-teal-100 mr-4">
+                <Target className="w-6 h-6 text-teal-600" />
+              </div>
+              Quick Actions
+            </h2>
+            <div className="space-y-4">
+              <QuickActionButton
+                icon={FileText}
+                title="Generate Report"
+                description="Create comprehensive monthly analytics report"
+                delay={100} onClick={undefined}              />
+              <QuickActionButton
+                icon={Database}
+                title="Update Data"
+                description="Sync latest tourism and revenue data"
+                delay={200} onClick={undefined}              />
+              <QuickActionButton
+                icon={MapPin}
+                title="Destination Management"
+                description="Manage tourist destinations and facilities"
+                delay={300} onClick={undefined}              />
+              <QuickActionButton
+                icon={Award}
+                title="Policy Updates"
+                description="Review new tourism policies and guidelines"
+                delay={400} onClick={undefined}              />
+              <QuickActionButton
+                icon={MessageSquare}
+                title="Stakeholder Communication"
+                description="Send updates to tourism stakeholders"
+                delay={500} onClick={undefined}              />
+            </div>
+          </div>
+        </div>
+
+        {/* Analytics Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+          {/* Tourist Destinations Performance */}
+          <div className={`bg-white rounded-2xl p-8 shadow-xl border border-gray-100 transition-all duration-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center">
+              <div className="p-3 rounded-xl bg-blue-100 mr-4">
+                <MapPin className="w-6 h-6 text-blue-600" />
+              </div>
+              Top Destinations Performance
+            </h2>
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={touristVisitsData} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
                 <defs>
                   <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.8}/>
-                    <stop offset="100%" stopColor="#1D4ED8" stopOpacity={0.6}/>
+                    <stop offset="0%" stopColor="#14B8A6" stopOpacity={0.8}/>
+                    <stop offset="100%" stopColor="#0D9488" stopOpacity={0.6}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
@@ -247,314 +324,193 @@ const Dashboard = () => {
                   dataKey="location" 
                   angle={-45} 
                   textAnchor="end" 
-                  height={80}
+                  height={100}
                   fontSize={12}
                   stroke="#64748b"
                 />
                 <YAxis fontSize={12} stroke="#64748b" />
                 <Tooltip 
-                  formatter={(value) => [value.toLocaleString(), 'Visitors']}
+                  formatter={(value, name) => [
+                    name === 'visitors' ? value.toLocaleString() : `₹${value}Cr`,
+                    name === 'visitors' ? 'Visitors' : 'Revenue'
+                  ]}
                   contentStyle={{
                     backgroundColor: 'white',
                     border: 'none',
                     borderRadius: '12px',
-                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
                   }}
                 />
                 <Bar 
                   dataKey="visitors" 
                   fill="url(#barGradient)" 
-                  radius={[6, 6, 0, 0]}
-                  maxBarSize={60}
+                  radius={[8, 8, 0, 0]}
+                  maxBarSize={50}
                 />
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Enhanced Revenue Analysis */}
-          <div className={`bg-white rounded-2xl p-6 shadow-xl border border-gray-100 transition-all duration-700 delay-300 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-                <div className="p-2 bg-green-50 rounded-lg mr-3">
-                  <DollarSign className="w-5 h-5 text-green-600" />
-                </div>
-                Monthly Revenue Trends
-              </h2>
-              <div className="text-sm text-gray-500">₹ in Lakhs</div>
-            </div>
-            <ResponsiveContainer width="100%" height={320}>
-              <LineChart data={monthlyRevenueData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+          {/* Monthly Trends */}
+          <div className={`bg-white rounded-2xl p-8 shadow-xl border border-gray-100 transition-all duration-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center">
+              <div className="p-3 rounded-xl bg-emerald-100 mr-4">
+                <TrendingUp className="w-6 h-6 text-emerald-600" />
+              </div>
+              Performance Trends
+            </h2>
+            <ResponsiveContainer width="100%" height={350}>
+              <LineChart data={monthlyTrendsData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <defs>
-                  <linearGradient id="hotelGradient" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="touristGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#14B8A6" stopOpacity={0.3}/>
+                    <stop offset="100%" stopColor="#14B8A6" stopOpacity={0.1}/>
+                  </linearGradient>
+                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="#10B981" stopOpacity={0.3}/>
                     <stop offset="100%" stopColor="#10B981" stopOpacity={0.1}/>
-                  </linearGradient>
-                  <linearGradient id="marketGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.3}/>
-                    <stop offset="100%" stopColor="#F59E0B" stopOpacity={0.1}/>
-                  </linearGradient>
-                  <linearGradient id="guideGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.3}/>
-                    <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0.1}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="month" fontSize={12} stroke="#64748b" />
                 <YAxis fontSize={12} stroke="#64748b" />
-                <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
+                <Tooltip 
+                  contentStyle={{
+                    backgroundColor: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+                  }}
+                />
                 <Line 
                   type="monotone" 
-                  dataKey="hotels" 
+                  dataKey="tourists" 
+                  stroke="#14B8A6" 
+                  strokeWidth={4}
+                  dot={{ fill: '#14B8A6', strokeWidth: 3, r: 6 }}
+                  activeDot={{ r: 8, strokeWidth: 3 }}
+                  name="Tourists (K)"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="revenue" 
                   stroke="#10B981" 
-                  strokeWidth={3}
-                  dot={{ fill: '#10B981', strokeWidth: 2, r: 5 }}
-                  activeDot={{ r: 7, strokeWidth: 2 }}
+                  strokeWidth={4}
+                  dot={{ fill: '#10B981', strokeWidth: 3, r: 6 }}
+                  activeDot={{ r: 8, strokeWidth: 3 }}
+                  name="Revenue (₹Cr)"
                 />
                 <Line 
                   type="monotone" 
-                  dataKey="marketplace" 
-                  stroke="#F59E0B" 
+                  dataKey="digital" 
+                  stroke="#06B6D4" 
                   strokeWidth={3}
-                  dot={{ fill: '#F59E0B', strokeWidth: 2, r: 5 }}
+                  dot={{ fill: '#06B6D4', strokeWidth: 2, r: 5 }}
                   activeDot={{ r: 7, strokeWidth: 2 }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="guides" 
-                  stroke="#8B5CF6" 
-                  strokeWidth={3}
-                  dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 5 }}
-                  activeDot={{ r: 7, strokeWidth: 2 }}
+                  name="Digital Adoption (%)"
                 />
               </LineChart>
             </ResponsiveContainer>
             <div className="flex justify-center mt-6 space-x-8">
               <div className="flex items-center">
-                <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
-                <span className="text-sm font-medium text-gray-700">Hotels & Stays</span>
+                <div className="w-4 h-4 bg-teal-500 rounded-full mr-2"></div>
+                <span className="text-sm font-medium text-gray-700">Tourist Flow</span>
               </div>
               <div className="flex items-center">
-                <div className="w-4 h-4 bg-yellow-500 rounded-full mr-2"></div>
-                <span className="text-sm font-medium text-gray-700">Tribal Marketplace</span>
+                <div className="w-4 h-4 bg-emerald-500 rounded-full mr-2"></div>
+                <span className="text-sm font-medium text-gray-700">Revenue</span>
               </div>
               <div className="flex items-center">
-                <div className="w-4 h-4 bg-purple-500 rounded-full mr-2"></div>
-                <span className="text-sm font-medium text-gray-700">Guide Services</span>
+                <div className="w-4 h-4 bg-cyan-500 rounded-full mr-2"></div>
+                <span className="text-sm font-medium text-gray-700">Digital Adoption</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Enhanced Tourism Insights */}
-        <div className={`bg-gradient-to-br from-white to-gray-50 rounded-2xl p-8 shadow-xl border border-gray-100 mb-8 transition-all duration-700 delay-400 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <h2 className="text-2xl font-semibold text-gray-800 mb-8 flex items-center">
-            <div className="p-3 bg-orange-50 rounded-xl mr-4">
-              <Award className="w-6 h-6 text-orange-600" />
+        {/* Department Performance */}
+        <div className={`bg-white rounded-2xl p-8 shadow-xl border border-gray-100 mb-12 transition-all duration-700 ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+          <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center">
+            <div className="p-3 rounded-xl bg-purple-100 mr-4">
+              <BarChart3 className="w-6 h-6 text-purple-600" />
             </div>
-            Key Tourism Insights
+            Department Performance Overview
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 hover:shadow-lg transition-all duration-300">
-              <div className="p-3 bg-blue-500 rounded-full mx-auto mb-4 w-fit">
-                <Calendar className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="font-semibold text-gray-800 mb-1">Peak Season</h3>
-              <p className="text-blue-600 font-bold text-xl">March - April</p>
-              <p className="text-sm text-gray-600 mt-2">40% more visitors</p>
-            </div>
-            <div className="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200 hover:shadow-lg transition-all duration-300">
-              <div className="p-3 bg-green-500 rounded-full mx-auto mb-4 w-fit">
-                <DollarSign className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="font-semibold text-gray-800 mb-1">Avg Revenue/Visitor</h3>
-              <p className="text-green-600 font-bold text-xl">₹1,576</p>
-              <p className="text-sm text-gray-600 mt-2">+12% from last year</p>
-            </div>
-            <div className="text-center p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200 hover:shadow-lg transition-all duration-300">
-              <div className="p-3 bg-purple-500 rounded-full mx-auto mb-4 w-fit">
-                <Eye className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="font-semibold text-gray-800 mb-1">Most Popular</h3>
-              <p className="text-purple-600 font-bold text-xl">Deoghar</p>
-              <p className="text-sm text-gray-600 mt-2">25,100 visitors</p>
-            </div>
-            <div className="text-center p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200 hover:shadow-lg transition-all duration-300">
-              <div className="p-3 bg-orange-500 rounded-full mx-auto mb-4 w-fit">
-                <Camera className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="font-semibold text-gray-800 mb-1">Avg Stay Duration</h3>
-              <p className="text-orange-600 font-bold text-xl">2.2 Days</p>
-              <p className="text-sm text-gray-600 mt-2">+0.3 days increase</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Enhanced Sentiment Analysis */}
-        <div className={`bg-white rounded-2xl p-8 shadow-xl border border-gray-100 transition-all duration-700 delay-500 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <h2 className="text-2xl font-semibold text-gray-800 mb-8 flex items-center">
-            <div className="p-3 bg-green-50 rounded-xl mr-4">
-              <ThumbsUp className="w-6 h-6 text-green-600" />
-            </div>
-            Sentiment Analysis Results
-            <span className="ml-4 text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-medium">
-              4,200 Total Responses
-            </span>
-          </h2>
-          
-          {/* Sentiment Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            {sentimentData.map((sentiment, index) => (
-              <SentimentCard key={sentiment.name} sentiment={sentiment} index={index} />
-            ))}
-          </div>
-
-          {/* Enhanced Destination Performance Table */}
-          <div className="mb-8">
-            <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-              <Star className="w-5 h-5 text-yellow-500 mr-2" />
-              Top Performing Destinations
-            </h3>
-            <div className="bg-gray-50 rounded-xl p-6 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b-2 border-gray-200">
-                      <th className="text-left py-4 px-4 font-semibold text-gray-700">Destination</th>
-                      <th className="text-left py-4 px-4 font-semibold text-gray-700">Rating</th>
-                      <th className="text-left py-4 px-4 font-semibold text-gray-700">Satisfaction</th>
-                      <th className="text-left py-4 px-4 font-semibold text-gray-700">Visits</th>
-                      <th className="text-left py-4 px-4 font-semibold text-gray-700">Avg Stay</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {topDestinationsData.map((destination, index) => (
-                      <tr key={index} className="border-b border-gray-200 hover:bg-white transition-colors duration-200 group">
-                        <td className="py-4 px-4">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold mr-3">
-                              {destination.destination.charAt(0)}
-                            </div>
-                            <span className="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors duration-200">
-                              {destination.destination}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center">
-                            <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                            <span className="font-bold text-gray-800">{destination.rating}</span>
-                            <span className="text-gray-500 text-sm ml-1">/5.0</span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center">
-                            <div className="w-20 bg-gray-200 rounded-full h-3 mr-3">
-                              <div 
-                                className="bg-gradient-to-r from-green-400 to-green-600 h-3 rounded-full transition-all duration-1000 ease-out"
-                                style={{ width: `${destination.satisfaction}%` }}
-                              ></div>
-                            </div>
-                            <span className="text-sm font-semibold text-gray-700">{destination.satisfaction}%</span>
-                          </div>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="font-semibold text-gray-800">{destination.visits.toLocaleString()}</span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-                            {destination.avgStay} days
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          {/* Enhanced User Requirements */}
-          <div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-6 flex items-center">
-              <Activity className="w-5 h-5 text-orange-500 mr-2" />
-              Common User Requirements & Feedback Trends
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {userRequirementsData.map((req, index) => (
-                <div key={index} className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 hover:from-white hover:to-gray-50 transition-all duration-300 shadow-lg hover:shadow-xl border border-gray-200">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-800 text-lg mb-1">{req.requirement}</h4>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        <span>{req.count} requests</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          req.priority === 'High' ? 'bg-red-100 text-red-700' :
-                          req.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-gray-100 text-gray-700'
-                        }`}>
-                          {req.priority} Priority
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-orange-600 mb-1">{req.percentage}%</div>
-                      <div className={`text-xs font-medium ${req.trend.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}>
-                        {req.trend}
-                      </div>
-                    </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+            {departmentMetrics.map((dept, index) => (
+              <div 
+                key={index} 
+                className={`p-6 bg-gradient-to-br from-gray-50 to-teal-50 rounded-xl border border-gray-200 hover:border-teal-300 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-2 ${
+                  isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                }`}
+                style={{ transitionDelay: `${index * 100}ms` }}
+              >
+                <h3 className="font-semibold text-gray-800 mb-4">{dept.department}</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Budget</span>
+                    <span className="font-semibold text-gray-800">₹{dept.budget}Cr</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Spent</span>
+                    <span className="font-semibold text-teal-600">₹{dept.spent}Cr</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
                     <div 
-                      className="bg-gradient-to-r from-orange-400 to-orange-600 h-3 rounded-full transition-all duration-1000 ease-out"
-                      style={{ width: `${req.percentage}%` }}
+                      className="bg-gradient-to-r from-teal-400 to-teal-600 h-3 rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: `${(dept.spent / dept.budget) * 100}%` }}
                     ></div>
                   </div>
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>0%</span>
-                    <span>30%</span>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">Efficiency</span>
+                    <span className="font-semibold text-emerald-600">{dept.efficiency}%</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Projects</span>
+                    <span className="font-semibold text-blue-600">{dept.projects}</span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Additional Analytics Summary */}
-          <div className="mt-8 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Quick Analytics Summary</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600 mb-1">4.5/5.0</div>
-                <div className="text-sm text-gray-600">Overall Platform Rating</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600 mb-1">89%</div>
-                <div className="text-sm text-gray-600">Would Recommend Rate</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600 mb-1">2.1M</div>
-                <div className="text-sm text-gray-600">Social Media Mentions</div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* Action Items Footer */}
-        <div className={`bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-8 shadow-2xl text-white transition-all duration-700 delay-600 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">Ready to Take Action?</h2>
-            <p className="text-orange-100 mb-6 text-lg">
-              Use these insights to improve Jharkhand's tourism infrastructure and visitor experience.
+        {/* Enhanced Footer */}
+        <div className={`bg-gradient-to-r from-teal-600 via-teal-700 to-emerald-700 rounded-2xl p-10 text-white shadow-2xl transition-all duration-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-4">Government of Jharkhand Tourism Dashboard</h2>
+            <p className="text-teal-100 text-lg max-w-3xl mx-auto">
+              Confidential analytics platform for authorized government personnel. Real-time insights driving data-driven tourism policy decisions.
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <button className="bg-white text-orange-600 px-6 py-3 rounded-xl font-semibold hover:bg-orange-50 transition-all duration-300 shadow-lg">
-                Generate Report
-              </button>
-              <button className="bg-orange-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-orange-700 transition-all duration-300 shadow-lg border border-orange-400">
-                Schedule Meeting
-              </button>
-              <button className="bg-transparent text-white px-6 py-3 rounded-xl font-semibold hover:bg-white/10 transition-all duration-300 border border-white/30">
-                Export Data
-              </button>
+          </div>
+          
+          <div className="flex flex-wrap justify-center gap-4 mb-8">
+            <button className="bg-white text-teal-700 px-8 py-4 rounded-xl font-semibold hover:bg-teal-50 transition-all duration-300 transform hover:scale-105 shadow-lg">
+              <FileText className="w-5 h-5 inline mr-2" />
+              Export Complete Report
+            </button>
+            <button className="bg-teal-500 text-white px-8 py-4 rounded-xl font-semibold hover:bg-teal-400 transition-all duration-300 transform hover:scale-105 shadow-lg border border-teal-400">
+              <Calendar className="w-5 h-5 inline mr-2" />
+              Schedule Review Meeting
+            </button>
+            <button className="bg-transparent text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/10 transition-all duration-300 transform hover:scale-105 border border-white/30">
+              <Database className="w-5 h-5 inline mr-2" />
+              Archive Historical Data
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8 border-t border-teal-500">
+            <div className="text-center">
+              <div className="text-3xl font-bold mb-2">99.8%</div>
+              <div className="text-teal-200">System Uptime</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold mb-2">24/7</div>
+              <div className="text-teal-200">Monitoring Active</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-bold mb-2">ISO 27001</div>
+              <div className="text-teal-200">Security Certified</div>
             </div>
           </div>
         </div>
