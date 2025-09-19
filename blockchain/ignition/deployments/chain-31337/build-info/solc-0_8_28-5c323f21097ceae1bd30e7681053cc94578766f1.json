@@ -1,0 +1,39 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_28-5c323f21097ceae1bd30e7681053cc94578766f1",
+  "solcVersion": "0.8.28",
+  "solcLongVersion": "0.8.28+commit.7893614a",
+  "userSourceNameMap": {
+    "contracts/GuideVerification.sol": "project/contracts/GuideVerification.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "cancun",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode",
+            "evm.deployedBytecode",
+            "evm.methodIdentifiers",
+            "metadata"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/GuideVerification.sol": {
+        "content": "// SPDX-License-Identifier: MIT\r\npragma solidity ^0.8.0;\r\n\r\ncontract GuideVerification {\r\n    address public admin;\r\n    mapping(address => bool) public verifiedGuides;\r\n\r\n    event GuideVerified(address guide);\r\n\r\n    constructor() {\r\n        admin = msg.sender; // whoever deploys is admin\r\n    }\r\n\r\n    // Only admin can verify\r\n    function verifyGuide(address _guide) public {\r\n        require(msg.sender == admin, \"Only admin can verify guides\");\r\n        verifiedGuides[_guide] = true;\r\n        emit GuideVerified(_guide);\r\n    }\r\n\r\n    // Anyone can check\r\n    function isVerified(address _guide) public view returns (bool) {\r\n        return verifiedGuides[_guide];\r\n    }\r\n}\r\n"
+      }
+    }
+  }
+}
