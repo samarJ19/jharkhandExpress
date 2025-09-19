@@ -185,15 +185,76 @@ router.post("/guide/verify", async (req: Request, res: Response) => {
     //@ts-ignore
     const contract = new ethers.Contract(contractAddress, abi, adminWallet);
     const tx = await contract.verifyGuide(guide.walletAddress);
-    await tx.wait();
+    const receipt = await tx.wait();
+    
+    // Verify transaction was successful
+    if (receipt.status !== 1) {
+      throw new Error("Transaction failed on blockchain");
+    }
+    
     await prisma.user.update({
       where: { id: guideId },
-      data: { verified: true },
+      data: { 
+        verified: true,
+        verificationTx: tx.hash
+      },
     });
     res.status(200).json({ message: "Guide verified successfully" });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Error while verifying guide" });
+  }
+});
+
+// get request to get the verification status of a guide
+router.get("/guide/:id/status", async (req: Request, res: Response) => {
+  const guideId = req.params.id;
+  if (!guideId) {
+    return res.status(400).json({ message: "Guide ID is required" });
+  }
+
+  try {
+    const guide = await prisma.user.findUnique({
+      where: { id: guideId },
+    });
+    if (!guide) {
+      return res.status(404).json({ message: "Guide not found" });
+    }
+    
+    //@ts-ignore
+    const contract = new ethers.Contract(contractAddress, abi, adminWallet);
+    const isVerified = await contract.isVerified(guide.walletAddress);
+    
+    // Optional: Check consistency with database
+    if (guide.verified !== isVerified) {
+      console.warn(`Verification mismatch for guide ${guideId}: DB=${guide.verified}, Blockchain=${isVerified}`);
+    }
+    
+    res.status(200).json({ 
+      verified: isVerified,
+      dbVerified: guide.verified,
+      verificationTx: guide.verificationTx
+    });
+  } catch (error) {
+    console.log(error);
+    // Check if it's a blockchain connectivity error
+    if (error instanceof Error && (error.message?.includes("network") || error.message?.includes("connection"))) {
+      return res.status(503).json({ message: "Blockchain network unavailable" });
+    }
+    res.status(500).json({ message: "Error while fetching guide status" });
+  }
+});
+
+// route to get all guides
+router.get("/guides", async (req: Request, res: Response) => {
+  try {
+    const guides = await prisma.user.findMany({
+      where: { role: "GUIDE" },
+    });
+    res.status(200).json(guides);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error while fetching guides" });
   }
 });
 
