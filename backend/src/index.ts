@@ -19,6 +19,8 @@ const app = express();
 const bodyParser = require('body-parser');
 
 app.use(cors(corsOptions));
+app.use(express.json()); // Add JSON middleware
+app.use(bodyParser.json()); // Also keep the existing bodyParser
 
 
 app.get("/api/get-mappls-token", async (req: Request, res: Response) => {
@@ -90,36 +92,126 @@ app.get("/api/get-directions-multi", async (req: Request, res: Response) => {
 });
 
 app.post("/stream-itinerary", async (req: Request, res: Response) => {
-    let body = "";
-    req.on("data", (chunk) => {
-        body += chunk;
-    });
-    
-    req.on("end", async () => {
-        // IMPROVED: Moved try/catch inside the 'end' handler to catch parsing errors
-        try {
-            const { user_prompt } = JSON.parse(body);
+    try {
+        const { user_prompt } = req.body;
+        
+        console.log("Received request with user_prompt:", user_prompt);
 
-            const apiRes = await axios({
-                method: "POST",
-                url: "https://promptyatra-1052532391820.europe-west1.run.app/stream-itinerary",
-                headers: {
-                    accept: "application/json",
-                    "Content-Type": "application/json",
-                },
-                data: { user_prompt },
-                responseType: "stream",
-            });
+        if (!user_prompt) {
+            return res.status(400).json({ error: "user_prompt is required" });
+        }
 
-            res.setHeader("Content-Type", "application/json");
-            apiRes.data.pipe(res);
-        } catch (err) {
-            console.error("Error in /stream-itinerary:", err);
+        const apiRes = await axios({
+            method: "POST",
+            url: "https://promptyatra-1052532391820.europe-west1.run.app/stream-itinerary",
+            headers: {
+                accept: "application/json",
+                "Content-Type": "application/json",
+            },
+            data: { user_prompt },
+            responseType: "stream",
+        });
+
+        console.log("External API response status:", apiRes.status);
+        console.log("External API response headers:", apiRes.headers);
+
+        res.setHeader("Content-Type", "application/json");
+        res.setHeader("Transfer-Encoding", "chunked");
+        
+        apiRes.data.pipe(res);
+        
+        apiRes.data.on('end', () => {
+            console.log("Stream completed");
+        });
+        
+        apiRes.data.on('error', (error: any) => {
+            console.error("Stream error:", error);
+            if (!res.headersSent) {
+                res.status(500).json({ error: "Stream error" });
+            }
+        });
+        
+    } catch (err) {
+        console.error("Error in /stream-itinerary:", err);
+        if (!res.headersSent) {
             res.status(500).json({ error: "Failed to stream itinerary." });
         }
-    });
+    }
 });
 
+app.get('/api/google-place-search', async (req, res) => {
+  // Get parameters from the frontend request
+  const { input, lat, lng } = req.query;
+
+  if (!input || !lat || !lng) {
+    return res.status(400).json({ error: 'Missing required query parameters' });
+  }
+
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY; // Get key securely from server environment
+  if (!apiKey) {
+    return res.status(500).json({ error: 'API key is not configured on the server' });
+  }
+
+  // Use the NEW Places API (Text Search)
+  const searchUrl = `https://places.googleapis.com/v1/places:searchText`;
+  
+  // Prepare the request body for the new API
+  const requestBody = {
+    textQuery: input as string,
+    locationBias: {
+      circle: {
+        center: {
+          latitude: parseFloat(lat as string),
+          longitude: parseFloat(lng as string)
+        },
+        radius: 2000.0 // 2km radius
+      }
+    }
+  };
+
+  // Headers for the new API
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Goog-Api-Key': apiKey,
+    'X-Goog-FieldMask': 'places.id,places.displayName,places.photos,places.formattedAddress,places.location'
+  };
+
+  try {
+    const response = await axios.post(searchUrl, requestBody, { headers });
+    
+    // Transform the new API response to match the expected format for your frontend
+    const transformedResponse = {
+      candidates: response.data.places?.map((place: any) => ({
+        place_id: place.id,
+        formatted_address: place.formattedAddress,
+        name: place.displayName?.text,
+        geometry: place.location ? {
+          location: {
+            lat: place.location.latitude,
+            lng: place.location.longitude
+          }
+        } : undefined,
+        photos: place.photos?.map((photo: any) => ({
+          photo_reference: photo.name.split('/').pop(), // Extract photo reference from name
+          height: photo.heightPx,
+          width: photo.widthPx
+        }))
+      })) || [],
+      status: 'OK'
+    };
+    
+    console.log('New Places API response:', JSON.stringify(transformedResponse, null, 2));
+    
+    // Forward the transformed response back to the frontend
+    res.json(transformedResponse);
+  } catch (error: any) {
+    console.error('Error calling New Google Places API:', error.response?.data || error.message);
+    res.status(500).json({ 
+      error: 'Failed to fetch data from Google Places API',
+      details: error.response?.data || error.message
+    });
+  }
+});
 
 
 
