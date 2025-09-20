@@ -1,522 +1,823 @@
 
-import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, Users, MapPin, DollarSign, Star, ThumbsUp, ThumbsDown, Calendar, Award, Eye, Camera, Activity, FileText, AlertTriangle, Shield, CheckCircle, Clock, Download, Filter, RefreshCw, Bell, Settings, Database, BarChart3, Target, Briefcase, Globe, Phone, Mail, MessageSquare, Search, Menu, X } from 'lucide-react';
 
-const Dashboard = () => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedMetric, setSelectedMetric] = useState(null);
+import React, { useState, useEffect } from 'react';
+import { BarChart3, TrendingUp, Users, DollarSign, Building2, Smartphone, AlertTriangle, Clock, FileText, RefreshCw, Star, MapPin, CheckCircle, XCircle, Pause, Activity, ThumbsUp, MessageSquare, Camera, Download, Calendar, Archive, Search, Bell, Settings } from 'lucide-react';
+
+interface StatCardData {
+  icon: React.ReactNode;
+  value: string;
+  label: string;
+  change: string;
+  changeType: 'positive' | 'negative';
+}
+
+interface AlertData {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+  time: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
+interface GuideData {
+  id: string;
+  name: string;
+  experience: string;
+  location: string;
+  rating: number;
+  status: 'verified' | 'pending' | 'rejected';
+  reviews: number;
+}
+
+interface SentimentData {
+  overall: number;
+  positive: number;
+  neutral: number;
+  negative: number;
+}
+
+interface ReviewData {
+  id: string;
+  tourist: string;
+  location: string;
+  rating: number;
+  comment: string;
+  date: string;
+  sentiment: 'positive' | 'neutral' | 'negative';
+}
+
+const JharkhandTourismDashboard: React.FC = () => {
+  const [activeSection, setActiveSection] = useState<'tourism-stats' | 'sentiment-analysis' | 'guide-verification'>('tourism-stats');
+  const [currentTime, setCurrentTime] = useState<string>('');
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoaded(true), 300);
-    return () => clearTimeout(timer);
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(now.toLocaleString('en-IN', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }));
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 60000);
+    return () => clearInterval(interval);
   }, []);
 
-  // Enhanced realistic data
-  const touristVisitsData = [
-    { location: 'Deoghar Temple', visitors: 2850000, revenue: 42.75, satisfaction: 94 },
-    { location: 'Parasnath Hills', visitors: 450000, revenue: 6.75, satisfaction: 88 },
-    { location: 'Netarhat Hill Station', visitors: 320000, revenue: 4.8, satisfaction: 91 },
-    { location: 'Hundru Falls', visitors: 280000, revenue: 4.2, satisfaction: 89 },
-    { location: 'Betla National Park', visitors: 185000, revenue: 3.7, satisfaction: 87 },
-    { location: 'Ranchi Rock Garden', visitors: 165000, revenue: 3.3, satisfaction: 85 }
+  const statsData: StatCardData[] = [
+    {
+      icon: <Users className="w-6 h-6" />,
+      value: '4.65M',
+      label: 'Annual Visitors',
+      change: '+12.5%',
+      changeType: 'positive'
+    },
+    {
+      icon: <DollarSign className="w-6 h-6" />,
+      value: '₹698 Cr',
+      label: 'Revenue Generated',
+      change: '+18.3%',
+      changeType: 'positive'
+    },
+    {
+      icon: <Building2 className="w-6 h-6" />,
+      value: '9,200',
+      label: 'Employment Created',
+      change: '+8.5%',
+      changeType: 'positive'
+    },
+    {
+      icon: <Smartphone className="w-6 h-6" />,
+      value: '82.3%',
+      label: 'Digital Adoption',
+      change: '+15.2%',
+      changeType: 'positive'
+    }
   ];
 
-  const monthlyTrendsData = [
-    { month: 'Apr', tourists: 385, revenue: 57.75, digital: 68, infrastructure: 72 },
-    { month: 'May', tourists: 420, revenue: 63.0, digital: 71, infrastructure: 75 },
-    { month: 'Jun', tourists: 315, revenue: 47.25, digital: 74, infrastructure: 78 },
-    { month: 'Jul', tourists: 290, revenue: 43.5, digital: 76, infrastructure: 80 },
-    { month: 'Aug', tourists: 350, revenue: 52.5, digital: 79, infrastructure: 82 },
-    { month: 'Sep', tourists: 380, revenue: 57.0, digital: 82, infrastructure: 85 }
+  const alertsData: AlertData[] = [
+    {
+      id: '1',
+      icon: '⚠️',
+      title: 'Infrastructure Alert',
+      description: 'Road maintenance required at Hundru Falls access route',
+      time: '2h ago',
+      priority: 'high'
+    },
+    {
+      id: '2',
+      icon: '⏰',
+      title: 'Capacity Warning',
+      description: 'Deoghar temple complex approaching weekend capacity limits',
+      time: '4h ago',
+      priority: 'medium'
+    }
   ];
 
-  const departmentMetrics = [
-    { department: 'Tourism Promotion', budget: 125, spent: 98, efficiency: 92, projects: 8 },
-    { department: 'Heritage Conservation', budget: 85, spent: 67, efficiency: 88, projects: 5 },
-    { department: 'Infrastructure Dev', budget: 65, spent: 58, efficiency: 85, projects: 12 },
-    { department: 'Digital Initiatives', budget: 35, spent: 28, efficiency: 91, projects: 6 },
-    { department: 'Staff Training', budget: 25, spent: 23, efficiency: 89, projects: 4 }
+  const guidesData: GuideData[] = [
+    {
+      id: '1',
+      name: 'Rajesh Kumar',
+      experience: '8 years',
+      location: 'Deoghar',
+      rating: 4.8,
+      status: 'verified',
+      reviews: 245
+    },
+    {
+      id: '2',
+      name: 'Priya Singh',
+      experience: '5 years',
+      location: 'Netarhat',
+      rating: 4.6,
+      status: 'pending',
+      reviews: 189
+    },
+    {
+      id: '3',
+      name: 'Amit Sharma',
+      experience: '3 years',
+      location: 'Hundru Falls',
+      rating: 4.2,
+      status: 'rejected',
+      reviews: 67
+    },
+    {
+      id: '4',
+      name: 'Sunita Devi',
+      experience: '6 years',
+      location: 'Betla National Park',
+      rating: 4.9,
+      status: 'verified',
+      reviews: 312
+    }
   ];
 
-  const liveAlerts = [
-    { type: 'critical', title: 'Infrastructure Alert', message: 'Road maintenance required at Hundru Falls access route', time: '2h ago', priority: 'High' },
-    { type: 'warning', title: 'Capacity Warning', message: 'Deoghar temple complex approaching weekend capacity limits', time: '4h ago', priority: 'Medium' },
-    { type: 'success', title: 'Project Update', message: 'Digital kiosk installation completed at Parasnath Hills', time: '6h ago', priority: 'Low' },
-    { type: 'info', title: 'Policy Update', message: 'New sustainable tourism guidelines released by Ministry', time: '1d ago', priority: 'Medium' }
-  ];
-
-  type StatCardProps = {
-    title: string;
-    value: string | number;
-    change: number;
-    icon: React.ElementType;
-    subtitle?: string;
-    color?: string;
-    delay?: number;
+  const sentimentData: SentimentData = {
+    overall: 8.4,
+    positive: 85,
+    neutral: 12,
+    negative: 3
   };
 
-  const StatCard: React.FC<StatCardProps> = ({ title, value, change, icon: Icon, subtitle, color = 'teal', delay = 0 }) => (
-    <div 
-      className={`bg-white rounded-2xl p-6 shadow-xl border border-gray-100 transform transition-all duration-700 hover:scale-105 hover:shadow-2xl ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-      }`}
-      style={{ transitionDelay: `${delay}ms` }}
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center mb-4">
-            <div className={`p-3 rounded-xl bg-${color}-50 mr-4 transform transition-transform duration-300 hover:rotate-6`}>
-              <Icon className={`w-6 h-6 text-${color}-600`} />
-            </div>
-            <div>
-              <p className="text-gray-600 text-sm font-medium mb-1">{title}</p>
-              <p className="text-3xl font-bold text-gray-900">{value}</p>
-            </div>
-          </div>
-          {subtitle && <p className="text-sm text-gray-500 mb-3">{subtitle}</p>}
-          <div className="flex items-center">
-            <div className={`flex items-center px-3 py-1 rounded-full ${change >= 0 ? 'bg-teal-50' : 'bg-red-50'}`}>
-              <TrendingUp className={`w-4 h-4 mr-1 ${change >= 0 ? 'text-teal-600' : 'text-red-500 rotate-180'}`} />
-              <span className={`text-sm font-semibold ${change >= 0 ? 'text-teal-700' : 'text-red-600'}`}>
-                {change >= 0 ? '+' : ''}{change}%
-              </span>
-            </div>
-            <span className="text-sm text-gray-500 ml-3">vs last period</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  const reviewsData: ReviewData[] = [
+    {
+      id: '1',
+      tourist: 'Ananya Sharma',
+      location: 'Deoghar Temple',
+      rating: 5,
+      comment: 'Absolutely divine experience! The spiritual atmosphere and beautiful architecture made our visit unforgettable.',
+      date: '2 days ago',
+      sentiment: 'positive'
+    },
+    {
+      id: '2',
+      tourist: 'Vikram Singh',
+      location: 'Netarhat Hills',
+      rating: 4,
+      comment: 'Amazing sunset views! However, road conditions could be better. Still worth the journey.',
+      date: '1 week ago',
+      sentiment: 'positive'
+    },
+    {
+      id: '3',
+      tourist: 'Meera Gupta',
+      location: 'Hundru Falls',
+      rating: 3,
+      comment: 'Beautiful waterfall but overcrowded during peak season. Better crowd management needed.',
+      date: '3 days ago',
+      sentiment: 'neutral'
+    }
+  ];
 
-  const AlertCard = ({ alert, index }: { alert: typeof liveAlerts[number]; index: number }) => (
-    <div 
-      className={`p-5 rounded-xl border-l-4 transition-all duration-500 hover:shadow-lg transform hover:-translate-y-1 ${
-        alert.type === 'critical' ? 'bg-red-50 border-red-500 hover:bg-red-100' :
-        alert.type === 'warning' ? 'bg-yellow-50 border-yellow-500 hover:bg-yellow-100' :
-        alert.type === 'success' ? 'bg-teal-50 border-teal-500 hover:bg-teal-100' :
-        'bg-blue-50 border-blue-500 hover:bg-blue-100'
-      } ${isLoaded ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'}`}
-      style={{ transitionDelay: `${index * 100}ms` }}
-    >
-      <div className="flex items-start">
-        <div className="flex-shrink-0 mr-4">
-          {alert.type === 'critical' && <AlertTriangle className="w-6 h-6 text-red-500" />}
-          {alert.type === 'warning' && <Clock className="w-6 h-6 text-yellow-500" />}
-          {alert.type === 'success' && <CheckCircle className="w-6 h-6 text-teal-500" />}
-          {alert.type === 'info' && <FileText className="w-6 h-6 text-blue-500" />}
-        </div>
-        <div className="flex-1">
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="font-semibold text-gray-800">{alert.title}</h4>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              alert.priority === 'High' ? 'bg-red-100 text-red-700' :
-              alert.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-              'bg-gray-100 text-gray-700'
-            }`}>
-              {alert.priority}
-            </span>
-          </div>
-          <p className="text-sm text-gray-700 mb-2">{alert.message}</p>
-          <p className="text-xs text-gray-500">{alert.time}</p>
-        </div>
-      </div>
-    </div>
-  );
+  const preferredLocations = [
+    { name: 'Deoghar Temple', rating: 92, icon: '🏛️', visitors: '2.1M' },
+    { name: 'Netarhat Sunset Point', rating: 89, icon: '🏔️', visitors: '1.8M' },
+    { name: 'Hundru Falls', rating: 87, icon: '💦', visitors: '1.5M' },
+    { name: 'Betla National Park', rating: 84, icon: '🐅', visitors: '1.2M' },
+    { name: 'Parasnath Hills', rating: 81, icon: '⛰️', visitors: '950K' }
+  ];
 
-  type QuickActionButtonProps = {
-    icon: React.ElementType;
-    title: string;
-    description: string;
-    onClick?: () => void;
-    delay?: number;
-  };
+  const destinationData = [
+    { name: 'Deoghar Temple', visitors: 2900 },
+    { name: 'Parasnath Hills', visitors: 450 },
+    { name: 'Netarhat Hill', visitors: 380 },
+    { name: 'Hundru Falls', visitors: 320 },
+    { name: 'Betla Park', visitors: 280 }
+  ];
 
-  const QuickActionButton: React.FC<QuickActionButtonProps> = ({ icon: Icon, title, description, onClick, delay = 0 }) => (
+  const departmentData = [
+    { name: 'Tourism Promotion', budget: '₹125Cr', spent: '₹98Cr', efficiency: 92, projects: 8, color: 'from-teal-400 to-teal-500' },
+    { name: 'Heritage Conservation', budget: '₹85Cr', spent: '₹67Cr', efficiency: 88, projects: 5, color: 'from-blue-400 to-blue-500' },
+    { name: 'Infrastructure Dev', budget: '₹65Cr', spent: '₹58Cr', efficiency: 85, projects: 12, color: 'from-green-400 to-green-500' },
+    { name: 'Digital Initiatives', budget: '₹35Cr', spent: '₹28Cr', efficiency: 91, projects: 6, color: 'from-purple-400 to-purple-500' },
+    { name: 'Staff Training', budget: '₹25Cr', spent: '₹23Cr', efficiency: 89, projects: 4, color: 'from-orange-400 to-orange-500' }
+  ];
+
+  const renderNavButton = (
+    section: typeof activeSection,
+    icon: string,
+    label: string
+  ) => (
     <button
-      onClick={onClick}
-      className={`w-full p-4 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 hover:from-teal-50 hover:to-teal-100 border border-gray-200 hover:border-teal-200 transition-all duration-300 text-left group transform hover:scale-105 hover:shadow-lg ${
-        isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+      className={`flex-1 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-300 transform hover:scale-105 ${
+        activeSection === section
+          ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg'
+          : 'bg-white text-gray-600 hover:bg-gray-50 hover:text-teal-600'
       }`}
-      style={{ transitionDelay: `${delay}ms` }}
+      onClick={() => setActiveSection(section)}
     >
-      <div className="flex items-center mb-3">
-        <div className="p-2 rounded-lg bg-teal-100 group-hover:bg-teal-200 transition-colors mr-3">
-          <Icon className="w-5 h-5 text-teal-600" />
-        </div>
-        <h3 className="font-semibold text-gray-800 group-hover:text-teal-700 transition-colors">{title}</h3>
-      </div>
-      <p className="text-sm text-gray-600">{description}</p>
+      <span className="flex items-center justify-center gap-2">
+        <span className="text-lg">{icon}</span>
+        {label}
+      </span>
     </button>
   );
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-teal-50">
-      {/* Enhanced Header */}
-      <div className="bg-white shadow-2xl border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="p-3 rounded-xl bg-teal-500 mr-4">
-                <Globe className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-teal-600 bg-clip-text text-transparent">
-                  Jharkhand Tourism Analytics
-                </h1>
-                <p className="text-gray-600 text-sm">Government Dashboard • Department of Tourism</p>
-                <div className="flex items-center mt-1">
-                  <div className="w-2 h-2 bg-teal-500 rounded-full mr-2 animate-pulse"></div>
-                  <span className="text-xs text-teal-600 font-medium">Live Data • Real-time Updates</span>
-                </div>
-              </div>
-            </div>
+  const renderStatCard = (stat: StatCardData, index: number) => (
+    <div key={index} className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+      <div className="flex items-start justify-between mb-4">
+        <div className={`p-3 rounded-xl bg-gradient-to-br from-teal-400 to-cyan-400 text-white shadow-lg`}>
+          {stat.icon}
+        </div>
+        <div className="flex items-center text-teal-500 text-sm font-medium">
+          <TrendingUp className="w-4 h-4 mr-1" />
+          {stat.change}
+        </div>
+      </div>
+      <div className="text-3xl font-bold text-gray-800 mb-2">{stat.value}</div>
+      <div className="text-gray-600 text-sm">{stat.label}</div>
+    </div>
+  );
 
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2">
-                <button className="p-3 rounded-xl bg-gray-100 hover:bg-teal-100 text-gray-600 hover:text-teal-600 transition-all duration-300 hover:scale-110">
-                  <Search className="w-5 h-5" />
-                </button>
-                <button className="p-3 rounded-xl bg-gray-100 hover:bg-teal-100 text-gray-600 hover:text-teal-600 transition-all duration-300 hover:scale-110 relative">
-                  <Bell className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-                </button>
-                <button className="p-3 rounded-xl bg-gray-100 hover:bg-teal-100 text-gray-600 hover:text-teal-600 transition-all duration-300 hover:scale-110">
-                  <Download className="w-5 h-5" />
-                </button>
-                <button className="p-3 rounded-xl bg-gray-100 hover:bg-teal-100 text-gray-600 hover:text-teal-600 transition-all duration-300 hover:scale-110">
-                  <Settings className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-4 border border-teal-200">
-                <p className="text-sm text-teal-700 font-medium">Last Updated</p>
-                <p className="font-bold text-teal-800">Sept 19, 2025 • 14:30</p>
-              </div>
-            </div>
+  const renderAlertItem = (alert: AlertData) => (
+    <div key={alert.id} className={`flex items-start gap-4 p-4 rounded-lg border-l-4 transition-all duration-300 hover:translate-x-1 hover:shadow-md ${
+      alert.priority === 'high' 
+        ? 'border-red-500 bg-red-50' 
+        : 'border-orange-500 bg-orange-50'
+    }`}>
+      <div className="text-2xl">{alert.icon}</div>
+      <div className="flex-1">
+        <div className="font-semibold text-gray-800">{alert.title}</div>
+        <div className="text-gray-600 text-sm mt-1">{alert.description}</div>
+        <div className="text-gray-400 text-xs mt-2">{alert.time}</div>
+      </div>
+      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+        alert.priority === 'high' 
+          ? 'bg-red-500 text-white' 
+          : 'bg-orange-500 text-white'
+      }`}>
+        {alert.priority.charAt(0).toUpperCase() + alert.priority.slice(1)}
+      </span>
+    </div>
+  );
+
+  const renderGuideCard = (guide: GuideData) => {
+    const getStatusIcon = () => {
+      switch (guide.status) {
+        case 'verified': return <CheckCircle className="w-5 h-5 text-green-500" />;
+        case 'pending': return <Pause className="w-5 h-5 text-orange-500" />;
+        case 'rejected': return <XCircle className="w-5 h-5 text-red-500" />;
+      }
+    };
+
+    const getStatusBadgeClass = () => {
+      switch (guide.status) {
+        case 'verified': return 'bg-green-100 text-green-700';
+        case 'pending': return 'bg-orange-100 text-orange-700';
+        case 'rejected': return 'bg-red-100 text-red-700';
+      }
+    };
+
+    return (
+      <div key={guide.id} className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-teal-400 to-cyan-400 flex items-center justify-center text-white font-bold text-lg">
+            {guide.name.charAt(0)}
+          </div>
+          <div className="flex-1">
+            <div className="font-semibold text-gray-800 text-lg">{guide.name}</div>
+            <div className="text-sm text-gray-600">{guide.experience} experience</div>
+          </div>
+          <div className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${getStatusBadgeClass()}`}>
+            {getStatusIcon()}
+            {guide.status.charAt(0).toUpperCase() + guide.status.slice(1)}
+          </div>
+        </div>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-gray-500" />
+            <span className="text-sm text-gray-600">{guide.location}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Star className="w-4 h-4 text-yellow-500 fill-current" />
+            <span className="text-sm font-medium">{guide.rating}</span>
+            <span className="text-sm text-gray-500">({guide.reviews} reviews)</span>
           </div>
         </div>
       </div>
+    );
+  };
 
+  const renderReviewCard = (review: ReviewData) => (
+    <div key={review.id} className="bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-300">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-semibold">
+            {review.tourist.charAt(0)}
+          </div>
+          <div>
+            <div className="font-semibold text-gray-800">{review.tourist}</div>
+            <div className="text-sm text-gray-500">{review.location}</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          {[...Array(5)].map((_, i) => (
+            <Star
+              key={i}
+              className={`w-4 h-4 ${i < review.rating ? 'text-yellow-500 fill-current' : 'text-gray-300'}`}
+            />
+          ))}
+        </div>
+      </div>
+      <p className="text-gray-700 text-sm mb-3">{review.comment}</p>
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-gray-500">{review.date}</span>
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+          review.sentiment === 'positive' ? 'bg-green-100 text-green-700' :
+          review.sentiment === 'neutral' ? 'bg-yellow-100 text-yellow-700' :
+          'bg-red-100 text-red-700'
+        }`}>
+          {review.sentiment}
+        </span>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+      {/* Main Navigation */}
+      <nav className="bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-2xl relative overflow-hidden">
+        <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold tracking-tight">Jharkhand Express</h1>
+            <ul className="flex items-center gap-8">
+              <li><a href="#home" className="hover:text-teal-300 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10">Home</a></li>
+              <li><a href="#treasures" className="hover:text-teal-300 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10">Treasures</a></li>
+              <li><a href="#destinations" className="hover:text-teal-300 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10">Destinations</a></li>
+              <li><a href="#experiences" className="hover:text-teal-300 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10">Experiences</a></li>
+              <li><a href="#admin" className="bg-teal-500 hover:bg-teal-600 px-4 py-2 rounded-lg transition-colors duration-200">Admin Sign-In</a></li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+      {/* Dashboard Header */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Key Performance Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <StatCard 
-            title="Annual Visitors" 
-            value="4.65M" 
-            change={12.5} 
-            icon={Users} 
-            subtitle="FY 2024-25 Target: 5M"
-            color="teal"
-            delay={0}
-          />
-          <StatCard 
-            title="Revenue Generated" 
-            value="₹698 Cr" 
-            change={18.3} 
-            icon={DollarSign} 
-            subtitle="Target: ₹750 Cr"
-            color="emerald"
-            delay={100}
-          />
-          <StatCard 
-            title="Employment Created" 
-            value="9,200" 
-            change={8.5} 
-            icon={Briefcase} 
-            subtitle="Direct & Indirect Jobs"
-            color="blue"
-            delay={200}
-          />
-          <StatCard 
-            title="Digital Adoption" 
-            value="82.3%" 
-            change={15.2} 
-            icon={Activity} 
-            subtitle="Platform Usage Rate"
-            color="purple"
-            delay={300}
-          />
+        <div className="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 relative overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-400 to-cyan-400"></div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-teal-400 to-cyan-400 rounded-xl flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                🌍
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-1">Jharkhand Tourism Analytics</h2>
+                <p className="text-gray-600">Government Dashboard • Department of Tourism</p>
+                <p className="text-teal-500 text-sm mt-1 flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  Live Data • Real-time Updates
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <Search className="w-5 h-5 text-gray-400 cursor-pointer hover:text-teal-500" />
+                <Bell className="w-5 h-5 text-gray-400 cursor-pointer hover:text-teal-500 relative">
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+                </Bell>
+                <Download className="w-5 h-5 text-gray-400 cursor-pointer hover:text-teal-500" />
+                <Settings className="w-5 h-5 text-gray-400 cursor-pointer hover:text-teal-500" />
+              </div>
+              <div className="text-right bg-teal-50 rounded-lg px-4 py-2">
+                <div className="text-teal-600 text-sm font-semibold">Last Updated</div>
+                <div className="text-gray-800 font-bold">Sept 19, 2025 • 14:30</div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Main Dashboard Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-          {/* Priority Alerts */}
-          <div className={`lg:col-span-2 bg-white rounded-2xl p-8 shadow-xl border border-gray-100 transition-all duration-700 ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-                <div className="p-3 rounded-xl bg-red-100 mr-4">
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
+        {/* Sub Navigation */}
+        <div className="bg-white rounded-2xl p-2 shadow-lg mt-6 flex gap-2">
+          {renderNavButton('tourism-stats', '📊', 'Tourism Statistics')}
+          {renderNavButton('sentiment-analysis', '💭', 'Sentiment Analysis')}
+          {renderNavButton('guide-verification', '✅', 'Guide Verification')}
+        </div>
+
+        {/* Tourism Statistics Section */}
+        {activeSection === 'tourism-stats' && (
+          <div className="mt-8 space-y-8 animate-fade-in">
+            {/* Key Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {statsData.map((stat, index) => renderStatCard(stat, index))}
+            </div>
+
+            {/* Department Performance */}
+            <div className="bg-white rounded-2xl p-6 shadow-lg">
+              <div className="flex items-center gap-3 mb-6">
+                <BarChart3 className="w-6 h-6 text-purple-500" />
+                <h3 className="text-xl font-semibold text-gray-800">Department Performance Overview</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                {departmentData.map((dept, index) => (
+                  <div key={index} className="bg-gray-50 rounded-xl p-4 hover:bg-gray-100 transition-all duration-300">
+                    <h4 className="font-semibold text-gray-800 mb-3">{dept.name}</h4>
+                    <div className="space-y-3">
+                      <div>
+                        <div className="text-xs text-gray-600 mb-1">Budget</div>
+                        <div className="text-lg font-bold text-gray-800">{dept.budget}</div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-600 mb-1">Spent</div>
+                        <div className="text-lg font-bold text-teal-600">{dept.spent}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className={`bg-gradient-to-r ${dept.color} h-2 rounded-full transition-all duration-1000`} 
+                            style={{ width: `${dept.efficiency}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-xs font-semibold text-gray-600">{dept.efficiency}%</span>
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        <span className="text-blue-600 font-semibold">{dept.projects}</span> Projects
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Charts */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="bg-white rounded-2xl p-6 shadow-lg">
+                <div className="flex items-center gap-3 mb-6">
+                  <MapPin className="w-6 h-6 text-teal-500" />
+                  <h3 className="text-xl font-semibold text-gray-800">Top Destinations Performance</h3>
                 </div>
-                Priority Alerts
-              </h2>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-500">Auto-refresh</span>
-                <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
+                <div className="flex items-end justify-between gap-2 h-48">
+                  {destinationData.map((dest, index) => {
+                    const maxHeight = Math.max(...destinationData.map(d => d.visitors));
+                    const height = (dest.visitors / maxHeight) * 180;
+                    return (
+                      <div key={index} className="flex-1 flex flex-col items-center">
+                        <div 
+                          className="w-full bg-gradient-to-t from-teal-400 to-cyan-400 rounded-t-lg transition-all duration-1000 ease-out hover:from-teal-500 hover:to-cyan-500 cursor-pointer relative group"
+                          style={{ height: `${height}px` }}
+                        >
+                          <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                            {dest.visitors}K visitors
+                          </div>
+                        </div>
+                        <div className="text-xs mt-2 text-center text-gray-600 font-medium">
+                          {dest.name.split(' ')[0]}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-            <div className="space-y-4">
-              {liveAlerts.map((alert, index) => (
-                <AlertCard key={index} alert={alert} index={index} />
-              ))}
-            </div>
-          </div>
 
-          {/* Quick Actions */}
-          <div className={`bg-white rounded-2xl p-8 shadow-xl border border-gray-100 transition-all duration-700 ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-            <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center">
-              <div className="p-3 rounded-xl bg-teal-100 mr-4">
-                <Target className="w-6 h-6 text-teal-600" />
-              </div>
-              Quick Actions
-            </h2>
-            <div className="space-y-4">
-              <QuickActionButton
-                icon={FileText}
-                title="Generate Report"
-                description="Create comprehensive monthly analytics report"
-                delay={100} onClick={undefined}              />
-              <QuickActionButton
-                icon={Database}
-                title="Update Data"
-                description="Sync latest tourism and revenue data"
-                delay={200} onClick={undefined}              />
-              <QuickActionButton
-                icon={MapPin}
-                title="Destination Management"
-                description="Manage tourist destinations and facilities"
-                delay={300} onClick={undefined}              />
-              <QuickActionButton
-                icon={Award}
-                title="Policy Updates"
-                description="Review new tourism policies and guidelines"
-                delay={400} onClick={undefined}              />
-              <QuickActionButton
-                icon={MessageSquare}
-                title="Stakeholder Communication"
-                description="Send updates to tourism stakeholders"
-                delay={500} onClick={undefined}              />
-            </div>
-          </div>
-        </div>
-
-        {/* Analytics Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {/* Tourist Destinations Performance */}
-          <div className={`bg-white rounded-2xl p-8 shadow-xl border border-gray-100 transition-all duration-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center">
-              <div className="p-3 rounded-xl bg-blue-100 mr-4">
-                <MapPin className="w-6 h-6 text-blue-600" />
-              </div>
-              Top Destinations Performance
-            </h2>
-            <ResponsiveContainer width="100%" height={350}>
-              <BarChart data={touristVisitsData} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
-                <defs>
-                  <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#14B8A6" stopOpacity={0.8}/>
-                    <stop offset="100%" stopColor="#0D9488" stopOpacity={0.6}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis 
-                  dataKey="location" 
-                  angle={-45} 
-                  textAnchor="end" 
-                  height={100}
-                  fontSize={12}
-                  stroke="#64748b"
-                />
-                <YAxis fontSize={12} stroke="#64748b" />
-                <Tooltip 
-                  formatter={(value, name) => [
-                    name === 'visitors' ? value.toLocaleString() : `₹${value}Cr`,
-                    name === 'visitors' ? 'Visitors' : 'Revenue'
-                  ]}
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Bar 
-                  dataKey="visitors" 
-                  fill="url(#barGradient)" 
-                  radius={[8, 8, 0, 0]}
-                  maxBarSize={50}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Monthly Trends */}
-          <div className={`bg-white rounded-2xl p-8 shadow-xl border border-gray-100 transition-all duration-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-            <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center">
-              <div className="p-3 rounded-xl bg-emerald-100 mr-4">
-                <TrendingUp className="w-6 h-6 text-emerald-600" />
-              </div>
-              Performance Trends
-            </h2>
-            <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={monthlyTrendsData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <defs>
-                  <linearGradient id="touristGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#14B8A6" stopOpacity={0.3}/>
-                    <stop offset="100%" stopColor="#14B8A6" stopOpacity={0.1}/>
-                  </linearGradient>
-                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#10B981" stopOpacity={0.3}/>
-                    <stop offset="100%" stopColor="#10B981" stopOpacity={0.1}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="month" fontSize={12} stroke="#64748b" />
-                <YAxis fontSize={12} stroke="#64748b" />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: 'none',
-                    borderRadius: '12px',
-                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
-                  }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="tourists" 
-                  stroke="#14B8A6" 
-                  strokeWidth={4}
-                  dot={{ fill: '#14B8A6', strokeWidth: 3, r: 6 }}
-                  activeDot={{ r: 8, strokeWidth: 3 }}
-                  name="Tourists (K)"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="#10B981" 
-                  strokeWidth={4}
-                  dot={{ fill: '#10B981', strokeWidth: 3, r: 6 }}
-                  activeDot={{ r: 8, strokeWidth: 3 }}
-                  name="Revenue (₹Cr)"
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="digital" 
-                  stroke="#06B6D4" 
-                  strokeWidth={3}
-                  dot={{ fill: '#06B6D4', strokeWidth: 2, r: 5 }}
-                  activeDot={{ r: 7, strokeWidth: 2 }}
-                  name="Digital Adoption (%)"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-            <div className="flex justify-center mt-6 space-x-8">
-              <div className="flex items-center">
-                <div className="w-4 h-4 bg-teal-500 rounded-full mr-2"></div>
-                <span className="text-sm font-medium text-gray-700">Tourist Flow</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-4 h-4 bg-emerald-500 rounded-full mr-2"></div>
-                <span className="text-sm font-medium text-gray-700">Revenue</span>
-              </div>
-              <div className="flex items-center">
-                <div className="w-4 h-4 bg-cyan-500 rounded-full mr-2"></div>
-                <span className="text-sm font-medium text-gray-700">Digital Adoption</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Department Performance */}
-        <div className={`bg-white rounded-2xl p-8 shadow-xl border border-gray-100 mb-12 transition-all duration-700 ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-          <h2 className="text-2xl font-bold text-gray-800 mb-8 flex items-center">
-            <div className="p-3 rounded-xl bg-purple-100 mr-4">
-              <BarChart3 className="w-6 h-6 text-purple-600" />
-            </div>
-            Department Performance Overview
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
-            {departmentMetrics.map((dept, index) => (
-              <div 
-                key={index} 
-                className={`p-6 bg-gradient-to-br from-gray-50 to-teal-50 rounded-xl border border-gray-200 hover:border-teal-300 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-2 ${
-                  isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                }`}
-                style={{ transitionDelay: `${index * 100}ms` }}
-              >
-                <h3 className="font-semibold text-gray-800 mb-4">{dept.department}</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Budget</span>
-                    <span className="font-semibold text-gray-800">₹{dept.budget}Cr</span>
+              <div className="bg-white rounded-2xl p-6 shadow-lg">
+                <div className="flex items-center gap-3 mb-6">
+                  <TrendingUp className="w-6 h-6 text-teal-500" />
+                  <h3 className="text-xl font-semibold text-gray-800">Performance Trends</h3>
+                </div>
+                <div className="space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-3 h-3 rounded-full bg-teal-500"></div>
+                    <span className="text-sm flex-1 font-medium">Tourist Flow (K)</span>
+                    <div className="flex-1 bg-gray-200 rounded-full h-3 relative overflow-hidden">
+                      <div className="bg-teal-500 h-3 rounded-full transition-all duration-1000 relative" style={{ width: '75%' }}>
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-pulse"></div>
+                      </div>
+                    </div>
+                    <span className="text-sm text-gray-600 w-12 font-semibold">315</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Spent</span>
-                    <span className="font-semibold text-teal-600">₹{dept.spent}Cr</span>
+                  <div className="flex items-center gap-4">
+                    <div className="w-3 h-3 rounded-full bg-cyan-500"></div>
+                    <span className="text-sm flex-1 font-medium">Revenue (₹Cr)</span>
+                    <div className="flex-1 bg-gray-200 rounded-full h-3 relative overflow-hidden">
+                      <div className="bg-cyan-500 h-3 rounded-full transition-all duration-1000 relative" style={{ width: '65%' }}>
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-pulse"></div>
+                      </div>
+                    </div>
+                    <span className="text-sm text-gray-600 w-12 font-semibold">47.25</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-3">
-                    <div 
-                      className="bg-gradient-to-r from-teal-400 to-teal-600 h-3 rounded-full transition-all duration-1000 ease-out"
-                      style={{ width: `${(dept.spent / dept.budget) * 100}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">Efficiency</span>
-                    <span className="font-semibold text-emerald-600">{dept.efficiency}%</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Projects</span>
-                    <span className="font-semibold text-blue-600">{dept.projects}</span>
+                  <div className="flex items-center gap-4">
+                    <div className="w-3 h-3 rounded-full bg-sky-500"></div>
+                    <span className="text-sm flex-1 font-medium">Digital Adoption (%)</span>
+                    <div className="flex-1 bg-gray-200 rounded-full h-3 relative overflow-hidden">
+                      <div className="bg-sky-500 h-3 rounded-full transition-all duration-1000 relative" style={{ width: '82%' }}>
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-pulse"></div>
+                      </div>
+                    </div>
+                    <span className="text-sm text-gray-600 w-12 font-semibold">74</span>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        {/* Enhanced Footer */}
-        <div className={`bg-gradient-to-r from-teal-600 via-teal-700 to-emerald-700 rounded-2xl p-10 text-white shadow-2xl transition-all duration-700 ${isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-4">Government of Jharkhand Tourism Dashboard</h2>
-            <p className="text-teal-100 text-lg max-w-3xl mx-auto">
-              Confidential analytics platform for authorized government personnel. Real-time insights driving data-driven tourism policy decisions.
-            </p>
-          </div>
-          
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            <button className="bg-white text-teal-700 px-8 py-4 rounded-xl font-semibold hover:bg-teal-50 transition-all duration-300 transform hover:scale-105 shadow-lg">
-              <FileText className="w-5 h-5 inline mr-2" />
-              Export Complete Report
-            </button>
-            <button className="bg-teal-500 text-white px-8 py-4 rounded-xl font-semibold hover:bg-teal-400 transition-all duration-300 transform hover:scale-105 shadow-lg border border-teal-400">
-              <Calendar className="w-5 h-5 inline mr-2" />
-              Schedule Review Meeting
-            </button>
-            <button className="bg-transparent text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/10 transition-all duration-300 transform hover:scale-105 border border-white/30">
-              <Database className="w-5 h-5 inline mr-2" />
-              Archive Historical Data
-            </button>
-          </div>
+            {/* Alerts and Quick Actions */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="bg-white rounded-2xl p-6 shadow-lg">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className="w-6 h-6 text-red-500" />
+                    <h3 className="text-xl font-semibold text-gray-800">Priority Alerts</h3>
+                  </div>
+                  <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    Auto-refresh
+                  </span>
+                </div>
+                <div className="space-y-4">
+                  {alertsData.map(renderAlertItem)}
+                </div>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8 border-t border-teal-500">
-            <div className="text-center">
-              <div className="text-3xl font-bold mb-2">99.8%</div>
-              <div className="text-teal-200">System Uptime</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold mb-2">24/7</div>
-              <div className="text-teal-200">Monitoring Active</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold mb-2">ISO 27001</div>
-              <div className="text-teal-200">Security Certified</div>
+              <div className="bg-white rounded-2xl p-6 shadow-lg">
+                <div className="flex items-center gap-3 mb-6">
+                  <RefreshCw className="w-6 h-6 text-teal-500" />
+                  <h3 className="text-xl font-semibold text-gray-800">Quick Actions</h3>
+                </div>
+                <div className="space-y-4">
+                  <button className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-teal-600 hover:to-cyan-600 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl flex items-center gap-3">
+                    <FileText className="w-5 h-5" />
+                    Generate Report
+                  </button>
+                  <p className="text-sm text-gray-500 mb-4">Create comprehensive monthly analytics report</p>
+                  
+                  {/* <button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:from */}
+                  <button className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:-translate-y-1 shadow-lg hover:shadow-xl flex items-center gap-3">
+                    <Activity className="w-5 h-5" />
+                    Update Capacity Status
+                  </button>
+                  <p className="text-sm text-gray-500">Manage destination capacity limits</p>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Sentiment Analysis Section */}
+        {activeSection === 'sentiment-analysis' && (
+          <div className="mt-8 space-y-8 animate-fade-in">
+            {/* Overall Sentiment Score */}
+            <div className="bg-white rounded-2xl p-6 shadow-lg">
+              <div className="flex items-center gap-3 mb-6">
+                <MessageSquare className="w-6 h-6 text-purple-500" />
+                <h3 className="text-xl font-semibold text-gray-800">Tourist Satisfaction Overview</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="text-center">
+                  <div className="relative inline-flex items-center justify-center">
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                      {sentimentData.overall}
+                    </div>
+                    <div className="absolute -bottom-2 bg-white px-3 py-1 rounded-full shadow-lg">
+                      <span className="text-xs font-semibold text-gray-600">Overall</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 text-sm text-gray-600">Satisfaction Score</div>
+                </div>
+                <div className="text-center">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-green-500 flex items-center justify-center text-white text-lg font-bold mx-auto shadow-lg">
+                    {sentimentData.positive}%
+                  </div>
+                  <div className="mt-3 text-sm font-semibold text-green-600">Positive</div>
+                  <div className="text-xs text-gray-500">Reviews</div>
+                </div>
+                <div className="text-center">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-yellow-400 to-orange-400 flex items-center justify-center text-white text-lg font-bold mx-auto shadow-lg">
+                    {sentimentData.neutral}%
+                  </div>
+                  <div className="mt-3 text-sm font-semibold text-orange-600">Neutral</div>
+                  <div className="text-xs text-gray-500">Reviews</div>
+                </div>
+                <div className="text-center">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-red-400 to-red-500 flex items-center justify-center text-white text-lg font-bold mx-auto shadow-lg">
+                    {sentimentData.negative}%
+                  </div>
+                  <div className="mt-3 text-sm font-semibold text-red-600">Negative</div>
+                  <div className="text-xs text-gray-500">Reviews</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Preferred Locations */}
+            <div className="bg-white rounded-2xl p-6 shadow-lg">
+              <div className="flex items-center gap-3 mb-6">
+                <ThumbsUp className="w-6 h-6 text-teal-500" />
+                <h3 className="text-xl font-semibold text-gray-800">Most Preferred Tourist Destinations</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                {preferredLocations.map((location, index) => (
+                  <div key={index} className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-4 hover:from-teal-50 hover:to-cyan-50 transition-all duration-300 transform hover:-translate-y-1">
+                    <div className="text-center">
+                      <div className="text-3xl mb-3">{location.icon}</div>
+                      <div className="font-semibold text-gray-800 text-sm mb-2">{location.name}</div>
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                        <span className="text-sm font-bold text-gray-800">{location.rating}%</span>
+                      </div>
+                      <div className="text-xs text-gray-600">{location.visitors} annual visitors</div>
+                      <div className="mt-3 bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-teal-400 to-cyan-400 h-2 rounded-full transition-all duration-1000"
+                          style={{ width: `${location.rating}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Tourist Reviews */}
+            <div className="bg-white rounded-2xl p-6 shadow-lg">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <Camera className="w-6 h-6 text-purple-500" />
+                  <h3 className="text-xl font-semibold text-gray-800">Recent Tourist Reviews</h3>
+                </div>
+                <button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-300 flex items-center gap-2">
+                  <Download className="w-4 h-4" />
+                  Export Reviews
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {reviewsData.map(renderReviewCard)}
+              </div>
+            </div>
+
+            {/* Sentiment Trends */}
+            <div className="bg-white rounded-2xl p-6 shadow-lg">
+              <div className="flex items-center gap-3 mb-6">
+                <BarChart3 className="w-6 h-6 text-indigo-500" />
+                <h3 className="text-xl font-semibold text-gray-800">Sentiment Analysis Trends</h3>
+              </div>
+              <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 text-sm font-medium text-gray-600">This Month</div>
+                  <div className="flex-1 bg-gray-200 rounded-full h-4 relative overflow-hidden">
+                    <div className="bg-gradient-to-r from-green-400 to-green-500 h-4 rounded-full transition-all duration-1000 relative" style={{ width: '85%' }}>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-pulse"></div>
+                    </div>
+                  </div>
+                  <span className="text-sm text-gray-600 w-12 font-semibold">8.5/10</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 text-sm font-medium text-gray-600">Last Month</div>
+                  <div className="flex-1 bg-gray-200 rounded-full h-4 relative overflow-hidden">
+                    <div className="bg-gradient-to-r from-blue-400 to-blue-500 h-4 rounded-full transition-all duration-1000 relative" style={{ width: '78%' }}>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-pulse"></div>
+                    </div>
+                  </div>
+                  <span className="text-sm text-gray-600 w-12 font-semibold">7.8/10</span>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 text-sm font-medium text-gray-600">3 Mon Ago</div>
+                  <div className="flex-1 bg-gray-200 rounded-full h-4 relative overflow-hidden">
+                    <div className="bg-gradient-to-r from-purple-400 to-purple-500 h-4 rounded-full transition-all duration-1000 relative" style={{ width: '72%' }}>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-pulse"></div>
+                    </div>
+                  </div>
+                  <span className="text-sm text-gray-600 w-12 font-semibold">7.2/10</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Guide Verification Section */}
+        {activeSection === 'guide-verification' && (
+          <div className="mt-8 space-y-8 animate-fade-in">
+            {/* Verification Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-green-400 to-emerald-400 text-white shadow-lg">
+                    <CheckCircle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-gray-800">147</div>
+                    <div className="text-sm text-gray-600">Verified Guides</div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-orange-400 to-yellow-400 text-white shadow-lg">
+                    <Pause className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-gray-800">23</div>
+                    <div className="text-sm text-gray-600">Pending Review</div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-red-400 to-pink-400 text-white shadow-lg">
+                    <XCircle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-gray-800">8</div>
+                    <div className="text-sm text-gray-600">Rejected</div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-400 text-white shadow-lg">
+                    <Users className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-gray-800">178</div>
+                    <div className="text-sm text-gray-600">Total Applications</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Guide Management */}
+            <div className="bg-white rounded-2xl p-6 shadow-lg">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <Users className="w-6 h-6 text-blue-500" />
+                  <h3 className="text-xl font-semibold text-gray-800">Guide Management System</h3>
+                </div>
+                <div className="flex gap-3">
+                  <button className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:from-green-600 hover:to-emerald-600 transition-all duration-300 flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    Bulk Approve
+                  </button>
+                  <button className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 flex items-center gap-2">
+                    <Archive className="w-4 h-4" />
+                    Export Data
+                  </button>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {guidesData.map(renderGuideCard)}
+              </div>
+            </div>
+
+            {/* Verification Process */}
+            <div className="bg-white rounded-2xl p-6 shadow-lg">
+              <div className="flex items-center gap-3 mb-6">
+                <FileText className="w-6 h-6 text-purple-500" />
+                <h3 className="text-xl font-semibold text-gray-800">Verification Process Status</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center gap-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                  <CheckCircle className="w-6 h-6 text-green-500" />
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-800">Document Verification</div>
+                    <div className="text-sm text-gray-600">All submitted documents verified and approved</div>
+                  </div>
+                  <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium">Complete</span>
+                </div>
+                <div className="flex items-center gap-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
+                  <Clock className="w-6 h-6 text-orange-500" />
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-800">Background Check</div>
+                    <div className="text-sm text-gray-600">Police verification and character certificate review</div>
+                  </div>
+                  <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-medium">In Progress</span>
+                </div>
+                <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <Calendar className="w-6 h-6 text-blue-500" />
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-800">Skill Assessment</div>
+                    <div className="text-sm text-gray-600">Practical and theoretical examination pending</div>
+                  </div>
+                  <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-medium">Scheduled</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default Dashboard;
+export default JharkhandTourismDashboard;
