@@ -1,6 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import React from "react";
+import {
+    Compass,
+    Feather,
+    Box,
+    ChevronLeft,
+    ChevronRight,
+    Menu,
+    X,
+    Palette,
+    MapPin,
+    Star,
+    Users,
+} from "lucide-react";
 
 // --- THEME DATA AND TYPES ---
 type ThemeVars = {
@@ -13,188 +26,85 @@ type Themes = {
 
 const themes: Themes = {
     sunset: {
-        "--color-primary-light": "#fef3c7", // amber-100
-        "--color-primary-medium": "#f59e0b", // amber-500
-        "--color-primary-dark": "#b45309", // amber-700
-        "--color-primary-darker": "#78350f", // amber-900
-        "--color-accent": "#f59e0b", // amber-500
-        "--color-background": "#fffbeb", // amber-50
-        "--color-surface": "#f7fafc", // stone-50
-        "--color-text-base": "#374151", // gray-700
-        "--color-text-muted": "#6b7280", // gray-500
+        "--color-primary-light": "#fef3c7",
+        "--color-primary-medium": "#f59e0b",
+        "--color-primary-dark": "#b45309",
+        "--color-primary-darker": "#78350f",
+        "--color-accent": "#f59e0b",
+        "--color-background": "#fffbeb",
+        "--color-surface": "#f7fafc",
+        "--color-text-base": "#374151",
+        "--color-text-muted": "#6b7280",
         "--color-text-inverted": "#ffffff",
     },
     forest: {
-        "--color-primary-light": "#ccfbf1", // teal-100
-        "--color-primary-medium": "#14b8a6", // teal-500
-        "--color-primary-dark": "#0f766e", // teal-700
-        "--color-primary-darker": "#134e4a", // teal-900
-        "--color-accent": "#10b981", // emerald-500
-        "--color-background": "#f0fdfa", // teal-50
-        "--color-surface": "#f8fafc", // slate-50
-        "--color-text-base": "#1f2937", // gray-800
-        "--color-text-muted": "#4b5563", // gray-600
+        "--color-primary-light": "#ccfbf1",
+        "--color-primary-medium": "#14b8a6",
+        "--color-primary-dark": "#0f766e",
+        "--color-primary-darker": "#134e4a",
+        "--color-accent": "#10b981",
+        "--color-background": "#f0fdfa",
+        "--color-surface": "#f8fafc",
+        "--color-text-base": "#1f2937",
+        "--color-text-muted": "#4b5563",
         "--color-text-inverted": "#ffffff",
     },
     riverstone: {
-        "--color-primary-light": "#e0f2fe", // sky-100
-        "--color-primary-medium": "#38bdf8", // sky-500
-        "--color-primary-dark": "#0369a1", // sky-700
-        "--color-primary-darker": "#0c4a6e", // sky-900
-        "--color-accent": "#60a5fa", // blue-400
-        "--color-background": "#f0f9ff", // sky-50
-        "--color-surface": "#f8fafc", // slate-50
-        "--color-text-base": "#1e293b", // slate-800
-        "--color-text-muted": "#475569", // slate-600
+        "--color-primary-light": "#e0f2fe",
+        "--color-primary-medium": "#38bdf8",
+        "--color-primary-dark": "#0369a1",
+        "--color-primary-darker": "#0c4a6e",
+        "--color-accent": "#60a5fa",
+        "--color-background": "#f0f9ff",
+        "--color-surface": "#f8fafc",
+        "--color-text-base": "#1e293b",
+        "--color-text-muted": "#475569",
         "--color-text-inverted": "#ffffff",
     },
 };
 
 // --- ICONS ---
 const CompassIcon = () => (
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
+    <Compass
         className="h-14 w-14 text-[var(--color-primary-dark)]"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
         strokeWidth={1.5}
-    >
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-        />
-    </svg>
+    />
 );
 const CultureIcon = () => (
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
+    <Feather
         className="h-14 w-14 text-[var(--color-primary-dark)]"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
         strokeWidth={1.5}
-    >
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"
-        />
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"
-        />
-    </svg>
+    />
 );
 const MarketIcon = () => (
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
+    <Box
         className="h-14 w-14 text-[var(--color-primary-dark)]"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
         strokeWidth={1.5}
-    >
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"
-        />
-    </svg>
-);
-const ChevronLeft = () => (
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-6 w-6"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2}
-    >
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M15 19l-7-7 7-7"
-        />
-    </svg>
-);
-const ChevronRight = () => (
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-6 w-6"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2}
-    >
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-    </svg>
-);
-const MenuIcon = () => (
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-6 w-6"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2}
-    >
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M4 6h16M4 12h16M4 18h16"
-        />
-    </svg>
-);
-const CloseIcon = () => (
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-6 w-6"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2}
-    >
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M6 18L18 6M6 6l12 12"
-        />
-    </svg>
-);
-const PaletteIcon = () => (
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-6 w-6"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={2}
-    >
-        <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
-        />
-    </svg>
+    />
 );
 
 export default function Home() {
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [theme, setTheme] = useState("forest"); // 'sunset', 'forest', 'riverstone'
+    const [theme, setTheme] = useState("forest");
 
     // Typing animation state
     const [text, setText] = useState("");
     const [wordIndex, setWordIndex] = useState(0);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    // Slideshow state
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const backgroundImages = [
+        "/Homepageback.jpg",
+        "https://images.unsplash.com/photo-1593693397649-65d2a6d7d89c?w=1920&q=80",
+        "https://images.unsplash.com/photo-1599422478953-53f78a7c2e9a?w=1920&q=80",
+    ];
+
     const wordsToRotate = [
-        "ancient tribal heritage",
-        "majestic waterfalls",
-        "pristine forests",
+        "ancient tribal heritage.",
+        "majestic waterfalls.",
+        "pristine forests.",
     ];
     const typingSpeed = 150;
     const deletingSpeed = 75;
@@ -226,61 +136,59 @@ export default function Home() {
         return () => clearTimeout(timeout);
     }, [text, isDeleting, wordIndex]);
 
+    useEffect(() => {
+        const slideInterval = setInterval(() => {
+            setCurrentSlide((prev) => (prev + 1) % backgroundImages.length);
+        }, 5000);
+        return () => clearInterval(slideInterval);
+    }, []);
+
     const destinations = [
         {
             name: "Patratu Valley",
             image: "/Patratu.jpg",
             description: "A stunning valley with pristine beauty",
         },
-
         {
             name: "Netarhat",
             image: "/Netarhat Jharkhand.jpg",
             description: "The Queen of Chotanagpur",
         },
-
         {
             name: "Dassam Falls",
             image: "/dassam falls.jpg",
             description: "Magnificent cascading waterfall",
         },
-
         {
             name: "Jagannath Temple",
             image: "/Jagannath Temple.jpg",
             description: "Ancient spiritual heritage",
         },
-
         {
             name: "Baidyanath Dham",
             image: "/Baidyanath Dham.jpg",
             description: "Sacred pilgrimage site",
         },
-
         {
             name: "Betla National Park",
             image: "/Betla National Park.jpg",
             description: "Wildlife sanctuary and nature reserve",
         },
-
         {
             name: "Jonha Falls",
             image: "/Jonha Falls.jpg",
             description: "Picturesque hanging valley falls",
         },
-
         {
             name: "Parasnath Hills",
             image: "/Parasnath Hill.jpg",
             description: "Jain pilgrimage site and highest peak of Jharkhand",
         },
-
         {
             name: "Ranchi Hill & Pahari Mandir",
             image: "/Ranchi Hill and Pahari Mandir.avif",
             description: "Hilltop temple offering panoramic views of Ranchi",
         },
-
         {
             name: "Hundru Falls",
             image: "/hundru.jpg",
@@ -301,7 +209,6 @@ export default function Home() {
     }, [currentIndex]);
 
     const handleStartExploring = () => navigate("/chat");
-    const handleStartPlanning = () => navigate("/chat");
 
     const ThemeSwitcher = () => {
         const cycleTheme = () => {
@@ -313,13 +220,71 @@ export default function Home() {
         return (
             <button
                 onClick={cycleTheme}
-                className="fixed bottom-5 right-5 z-100 bg-[var(--color-primary-medium)] text-[var(--color-text-inverted)] p-3 rounded-full shadow-lg hover:bg-[var(--color-primary-dark)] hover:scale-110 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-primary-dark)]"
+                className="fixed bottom-5 right-5 z-50 bg-[var(--color-primary-medium)] text-[var(--color-text-inverted)] p-3 rounded-full shadow-lg transition-all duration-300 ease-in-out hover:bg-[var(--color-primary-dark)] hover:scale-110 active:scale-95"
                 aria-label="Switch color theme"
             >
-                <PaletteIcon />
+                <Palette />
             </button>
         );
     };
+
+    // User reviews data
+    const userReviews = [
+        {
+            id: 1,
+            name: "Anita Kumari",
+            location: "Mumbai",
+            rating: 5,
+            comment:
+                "Absolutely amazing experience! The hidden gems I discovered through this platform made my Jharkhand trip unforgettable. The tribal handicrafts I bought directly supported local artisans.",
+            avatar: "A",
+        },
+        {
+            id: 2,
+            name: "Vikash Singh",
+            location: "Delhi",
+            rating: 5,
+            comment:
+                "The AI recommendations were spot-on! Found the most beautiful waterfalls and stayed in authentic tribal homestays. This is the future of travel planning!",
+            avatar: "V",
+        },
+        {
+            id: 3,
+            name: "Shreya Patel",
+            location: "Bangalore",
+            rating: 4,
+            comment:
+                "Loved the cultural immersion aspect. Meeting local artisans and learning about their crafts was the highlight of my journey. Highly recommend for culture enthusiasts!",
+            avatar: "S",
+        },
+        {
+            id: 4,
+            name: "Ravi Kumar",
+            location: "Kolkata",
+            rating: 5,
+            comment:
+                "As a photographer, I was blown away by the scenic locations recommended by the AI. Captured some of my best shots at Netarhat and Patratu Valley!",
+            avatar: "R",
+        },
+        {
+            id: 5,
+            name: "Meera Gupta",
+            location: "Pune",
+            rating: 5,
+            comment:
+                "The platform made it so easy to connect with local communities. The homestay experience was authentic and the food was incredible. Will definitely visit again!",
+            avatar: "M",
+        },
+        {
+            id: 6,
+            name: "Ajay Sharma",
+            location: "Jaipur",
+            rating: 4,
+            comment:
+                "Great platform for adventure seekers! The trekking routes and nature trails were perfectly planned. The local guides were knowledgeable and friendly.",
+            avatar: "A",
+        },
+    ];
 
     return (
         <div
@@ -327,167 +292,189 @@ export default function Home() {
             className="bg-[var(--color-background)] font-serif"
         >
             <ThemeSwitcher />
-            {/* Simplified Header */}
             <header className="absolute top-0 left-0 w-full z-50 transition-all duration-300">
                 <div className="container mx-auto px-6 py-4">
                     <div className="flex justify-between items-center">
-                        <div className="flex items-center space-x-3">
-                            {/* <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-primary-light)] to-[var(--color-primary-medium)] rounded-full flex items-center justify-center">
+                        <Link to="/" className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-primary-light)] to-[var(--color-primary-medium)] rounded-full flex items-center justify-center">
                                 <span className="text-[var(--color-primary-darker)] font-bold text-lg">
                                     J
                                 </span>
-                            </div> */}
+                            </div>
                             <h1 className="text-2xl font-bold text-white tracking-wide">
                                 Jharkhand Express
                             </h1>
-                        </div>
-
-                        {/* Desktop Navigation */}
+                        </Link>
                         <nav className="hidden lg:flex items-center space-x-6">
-                            <Link
-                                to="/"
-                                className="text-white hover:text-[var(--color-primary-light)] transition-all duration-300 font-medium relative group"
-                            >
-                                Home
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[var(--color-primary-light)] transition-all duration-300 group-hover:w-full"></span>
-                            </Link>
-                            <Link
-                                to="/jharkhand-treasures"
-                                className="text-white hover:text-[var(--color-primary-light)] transition-all duration-300 font-medium relative group"
-                            >
-                                Treasures
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[var(--color-primary-light)] transition-all duration-300 group-hover:w-full"></span>
-                            </Link>
-                            <a
-                                href="#destinations"
-                                className="text-white hover:text-[var(--color-primary-light)] transition-all duration-300 font-medium relative group"
-                            >
-                                Destinations
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[var(--color-primary-light)] transition-all duration-300 group-hover:w-full"></span>
-                            </a>
                             <a
                                 href="#experiences"
-                                className="text-white hover:text-[var(--color-primary-light)] transition-all duration-300 font-medium relative group"
+                                className="text-white/80 hover:text-white transition-colors duration-300 font-medium"
                             >
                                 Experiences
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[var(--color-primary-light)] transition-all duration-300 group-hover:w-full"></span>
                             </a>
-                            <Link
-                                to="/admin"
-                                className="text-white/80 hover:text-white border border-white/30 rounded-full py-2 px-5 transition-all duration-300 hover:bg-white/10 text-sm"
+                            <a
+                                href="#destinations"
+                                className="text-white/80 hover:text-white transition-colors duration-300 font-medium"
                             >
-                                Admin Sign-In
-                            </Link>
+                                Destinations
+                            </a>
+                            <a
+                                href="#treasure"
+                                className="text-white/80 hover:text-white transition-colors duration-300 font-medium"
+                            >
+                                Treasure
+                            </a>
+                            <a
+                                href="#reviews"
+                                className="text-white/80 hover:text-white transition-colors duration-300 font-medium"
+                            >
+                                Reviews
+                            </a>
+                            <div className="flex items-center space-x-2 pl-4 border-l border-white/20">
+                                <Link
+                                    to="/tourGuideRegistration"
+                                    className="text-white hover:text-[var(--color-primary-light)] transition-colors font-medium"
+                                >
+                                    For Guides
+                                </Link>
+                                <Link
+                                    to="/admin"
+                                    className="text-white/80 hover:text-white border border-white/30 rounded-full py-2 px-5 transition-all duration-300 hover:bg-white/10 text-sm"
+                                >
+                                    Admin
+                                </Link>
+                            </div>
                         </nav>
-
-                        {/* Mobile Menu Button */}
                         <button
                             className="lg:hidden text-white p-2"
                             onClick={() => setIsMenuOpen(!isMenuOpen)}
                         >
-                            {isMenuOpen ? <CloseIcon /> : <MenuIcon />}
+                            {isMenuOpen ? <X /> : <Menu />}
                         </button>
                     </div>
-
-                    {/* Mobile Menu */}
                     {isMenuOpen && (
-                        <div className="lg:hidden absolute top-full left-0 right-0 mt-4">
-                            <div className="mx-6 bg-black/30 backdrop-blur-md rounded-2xl shadow-xl">
-                                <nav className="flex flex-col p-6 space-y-2">
-                                    <Link
-                                        to="/"
-                                        className="text-white hover:text-[var(--color-primary-light)] font-medium py-3 border-b border-white/20"
-                                    >
-                                        Home
-                                    </Link>
-                                    <Link
-                                        to="/jharkhand-treasures"
-                                        className="text-white hover:text-[var(--color-primary-light)] font-medium py-3 border-b border-white/20"
-                                    >
-                                        Treasures
-                                    </Link>
-                                    <a
-                                        href="#destinations"
-                                        className="text-white hover:text-[var(--color-primary-light)] font-medium py-3 border-b border-white/20"
-                                    >
-                                        Destinations
-                                    </a>
-                                    <a
-                                        href="#experiences"
-                                        className="text-white hover:text-[var(--color-primary-light)] font-medium py-3 border-b border-white/20"
-                                    >
-                                        Experiences
-                                    </a>
-                                    <Link
-                                        to="/admin"
-                                        className="text-white hover:text-[var(--color-primary-light)] font-medium py-3 border-b border-white/20"
-                                    >
-                                        Admin Sign-In
-                                    </Link>
-                                    <button
-                                        onClick={handleStartPlanning}
-                                        className="bg-gradient-to-r from-[var(--color-primary-medium)] to-[var(--color-accent)] text-white font-semibold py-3 px-6 rounded-full mt-4 hover:shadow-lg transition-all duration-300"
-                                    >
-                                        Plan Your Journey
-                                    </button>
-                                </nav>
+                        <div className="lg:hidden mt-4 bg-black/90 backdrop-blur-sm rounded-lg p-4">
+                            <div className="flex flex-col space-y-3">
+                                <a
+                                    href="#experiences"
+                                    className="text-white hover:text-[var(--color-primary-light)] transition-colors font-medium"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    Experiences
+                                </a>
+                                <a
+                                    href="#destinations"
+                                    className="text-white hover:text-[var(--color-primary-light)] transition-colors font-medium"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    Destinations
+                                </a>
+                                <a
+                                    href="#treasure"
+                                    className="text-white hover:text-[var(--color-primary-light)] transition-colors font-medium"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    Treasure
+                                </a>
+                                <a
+                                    href="#reviews"
+                                    className="text-white hover:text-[var(--color-primary-light)] transition-colors font-medium"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    Reviews
+                                </a>
+                                <Link
+                                    to="/guide-registration"
+                                    className="text-white hover:text-[var(--color-primary-light)] transition-colors font-medium border-t border-white/20 pt-3 mt-2"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    For Guides
+                                </Link>
+                                <Link
+                                    to="/admin"
+                                    className="text-white hover:text-[var(--color-primary-light)] transition-colors font-medium"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    Admin Sign-In
+                                </Link>
                             </div>
                         </div>
                     )}
                 </div>
             </header>
 
-            {/* Enhanced Hero Section */}
             <section className="relative h-screen flex items-center justify-center text-white overflow-hidden">
-                <div
-                    className="absolute inset-0 bg-cover bg-center transform scale-110"
-                    style={{
-                        backgroundImage: `url(/Homepageback.jpg)`,
-                    }}
-                ></div>
-                <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/60"></div>
+                {backgroundImages.map((img, index) => (
+                    <div
+                        key={img}
+                        className="absolute inset-0 w-full h-full bg-cover bg-center transition-opacity duration-1000 ease-in-out"
+                        style={{
+                            backgroundImage: `url(${img})`,
+                            opacity: index === currentSlide ? 1 : 0,
+                        }}
+                    />
+                ))}
+                <div className="absolute inset-0 bg-black/60"></div>
+
                 <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
-                    <div className="mb-6">
-                        <span className="inline-block bg-[var(--color-primary-medium)]/20 text-[var(--color-primary-light)] px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm border border-[var(--color-primary-light)]/20">
-                            Welcome to the Land of Forests
-                        </span>
-                    </div>
-                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 drop-shadow-2xl bg-gradient-to-r from-white to-[var(--color-primary-light)] bg-clip-text text-transparent">
+                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 drop-shadow-2xl bg-gradient-to-r from-white to-[var(--color-primary-light)] bg-clip-text text-transparent animate-fade-in-down">
                         Johar, Jharkhand!
                     </h1>
-                    <p className="text-lg md:text-2xl mb-10 max-w-3xl mx-auto drop-shadow-lg leading-relaxed text-gray-100 h-16 md:h-20">
+                    <p className="text-lg md:text-2xl mb-10 max-w-3xl mx-auto drop-shadow-lg leading-relaxed text-gray-200 h-10 animate-fade-in-down animation-delay-300">
                         Embark on a journey through{" "}
                         <span className="font-semibold text-[var(--color-primary-light)] border-r-2 border-r-[var(--color-primary-light)] animate-pulse">
                             {text}
                         </span>
-                        <br />
-                        Let AI craft your perfect Jharkhand adventure.
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <div className="animate-fade-in-up animation-delay-600">
                         <button
                             onClick={handleStartExploring}
-                            className="group bg-gradient-to-r from-[var(--color-primary-medium)] to-[var(--color-accent)] hover:from-[var(--color-accent)] hover:to-[var(--color-primary-medium)] text-white font-bold py-4 px-10 rounded-full text-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-2xl hover:shadow-[var(--color-primary-medium)]/25 flex items-center space-x-2"
+                            className="group bg-gradient-to-r from-[var(--color-primary-medium)] to-[var(--color-accent)] hover:from-[var(--color-accent)] hover:to-[var(--color-primary-medium)] text-white font-bold py-4 px-10 rounded-full text-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-2xl hover:shadow-[var(--color-primary-medium)]/25 flex items-center space-x-2 mx-auto"
                         >
                             <span>Start Exploring</span>
-                            <svg
-                                className="w-5 h-5 group-hover:translate-x-1 transition-transform"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M17 8l4 4m0 0l-4 4m4-4H3"
-                                />
-                            </svg>
+                            <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </button>
                     </div>
                 </div>
             </section>
 
-            {/* Enhanced Features Section */}
+            <style>{`
+                @keyframes fade-in-down {
+                    0% {
+                        opacity: 0;
+                        transform: translateY(-20px);
+                    }
+                    100% {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                @keyframes fade-in-up {
+                    0% {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    100% {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                .animation-delay-300 {
+                    animation-delay: 300ms;
+                }
+                .animation-delay-600 {
+                    animation-delay: 600ms;
+                }
+                .animate-fade-in-down {
+                    animation: fade-in-down 0.8s ease-out forwards;
+                    opacity: 0;
+                }
+                .animate-fade-in-up {
+                    animation: fade-in-up 0.8s ease-out forwards;
+                    opacity: 0;
+                }
+            `}</style>
+
             <section
                 id="experiences"
                 className="py-24 bg-gradient-to-b from-[var(--color-surface)] to-[var(--color-background)]"
@@ -520,8 +507,7 @@ export default function Home() {
                             <p className="text-[var(--color-text-muted)] leading-relaxed">
                                 Our intelligent system analyzes your preferences
                                 to create personalized itineraries that capture
-                                the essence of Jharkhand, from hidden waterfalls
-                                to authentic tribal experiences.
+                                the essence of Jharkhand.
                             </p>
                         </div>
 
@@ -536,9 +522,7 @@ export default function Home() {
                             </h3>
                             <p className="text-[var(--color-text-muted)] leading-relaxed">
                                 Connect deeply with Jharkhand's rich tribal
-                                heritage through carefully curated experiences
-                                that respect traditions while creating
-                                meaningful connections with local communities.
+                                heritage through carefully curated experiences.
                             </p>
                         </div>
 
@@ -552,9 +536,7 @@ export default function Home() {
                                 Support Local Artisans
                             </h3>
                             <p className="text-[var(--color-text-muted)] leading-relaxed">
-                                Discover and purchase exquisite tribal
-                                handicrafts directly from skilled artisans,
-                                ensuring your journey contributes to preserving
+                                Your journey contributes to preserving
                                 traditional crafts and supporting local
                                 livelihoods.
                             </p>
@@ -563,7 +545,6 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* Destinations Section */}
             <section
                 id="destinations"
                 className="py-24 bg-gradient-to-b from-[var(--color-background)] to-[var(--color-surface)] overflow-hidden"
@@ -675,9 +656,12 @@ export default function Home() {
                 </div>
             </section>
 
-            {/* New Treasures CTA Section */}
-            <section className="py-24 bg-gradient-to-b from-[var(--color-surface)] to-white">
-                <div className="container mx-auto px-6 text-center">
+            {/* JHarkhands Treasure */}
+            <section
+                id="treasure"
+                className="py-24 bg-gradient-to-b from-[var(--color-background)] to-[var(--color-surface)]"
+            >
+                <div className="container mx-auto text-center px-6">
                     <div className="mb-4">
                         <span className="inline-block bg-[var(--color-primary-light)] text-[var(--color-primary-dark)] px-4 py-2 rounded-full text-sm font-semibold">
                             Local Culture & Crafts
@@ -697,6 +681,160 @@ export default function Home() {
                             Explore the Marketplace
                         </button>
                     </Link>
+                </div>
+            </section>
+
+            {/* Tourist Registration Section */}
+            <section
+                id="registerguide"
+                className="py-24 bg-gradient-to-b from-[var(--color-surface)] to-[var(--color-background)]"
+            >
+                <div className="container mx-auto px-6">
+                    <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+                        <div className="grid lg:grid-cols-2 items-center">
+                            <div className="p-12 lg:p-16">
+                                <div className="mb-4">
+                                    <span className="inline-block bg-[var(--color-primary-light)] text-[var(--color-primary-dark)] px-4 py-2 rounded-full text-sm font-semibold">
+                                        Join Our Community
+                                    </span>
+                                </div>
+                                <h2 className="text-4xl lg:text-5xl font-bold text-[var(--color-text-base)] mb-6">
+                                    Become a Registered Tourist
+                                </h2>
+                                <p className="text-[var(--color-text-muted)] text-lg mb-8 leading-relaxed">
+                                    Register as a tourist to unlock exclusive
+                                    benefits, connect with certified local tour
+                                    guides, and get access to personalized
+                                    travel recommendations tailored just for
+                                    you.
+                                </p>
+                                <div className="space-y-4 mb-8">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-6 h-6 bg-[var(--color-primary-medium)] rounded-full flex items-center justify-center">
+                                            <Star className="w-3 h-3 text-white" />
+                                        </div>
+                                        <span className="text-[var(--color-text-base)]">
+                                            Access exclusive cultural
+                                            experiences
+                                        </span>
+                                    </div>
+                                </div>
+                                <Link to="/tourGuideRegistration">
+                                    <button className="group bg-gradient-to-r from-[var(--color-primary-medium)] to-[var(--color-accent)] hover:from-[var(--color-accent)] hover:to-[var(--color-primary-medium)] text-white font-bold py-4 px-8 rounded-full text-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-xl flex items-center space-x-2">
+                                        <Users className="w-5 h-5" />
+                                        <span>Register as Tourist</span>
+                                    </button>
+                                </Link>
+                            </div>
+                            <div className="h-96 lg:h-full">
+                                <img
+                                    src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=800&q=80"
+                                    alt="Tourist exploring nature"
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Testimonials Section */}
+            <section
+                id="reviews"
+                className="py-24 bg-gradient-to-b from-white to-[var(--color-surface)]"
+            >
+                <div className="container mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <span className="inline-block bg-[var(--color-primary-light)] text-[var(--color-primary-dark)] px-4 py-2 rounded-full text-sm font-semibold mb-4">
+                            Traveler Stories
+                        </span>
+                        <h2 className="text-4xl font-bold text-[var(--color-text-base)] mb-6">
+                            What Our Explorers Say
+                        </h2>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-8">
+                        <div className="bg-white p-8 rounded-2xl shadow-lg border border-stone-100 hover:shadow-xl transition-all duration-300">
+                            <div className="flex items-center mb-4">
+                                <div className="w-12 h-12 bg-[var(--color-primary-light)] rounded-full flex items-center justify-center">
+                                    <span className="text-[var(--color-primary-dark)] font-bold">
+                                        R
+                                    </span>
+                                </div>
+                                <div className="ml-4">
+                                    <h4 className="font-semibold text-[var(--color-text-base)]">
+                                        Rahul Sharma
+                                    </h4>
+                                    <p className="text-[var(--color-text-muted)] text-sm">
+                                        Photography Enthusiast
+                                    </p>
+                                </div>
+                            </div>
+                            <p className="text-[var(--color-text-muted)] italic leading-relaxed">
+                                "The AI-powered itinerary was spot-on! It
+                                recommended hidden waterfalls I never would have
+                                found otherwise. Jharkhand's beauty exceeded all
+                                expectations."
+                            </p>
+                            <div className="flex text-[var(--color-accent)] mt-4">
+                                <span>★★★★★</span>
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-8 rounded-2xl shadow-lg border border-stone-100 hover:shadow-xl transition-all duration-300">
+                            <div className="flex items-center mb-4">
+                                <div className="w-12 h-12 bg-[var(--color-primary-light)] rounded-full flex items-center justify-center">
+                                    <span className="text-[var(--color-primary-dark)] font-bold">
+                                        P
+                                    </span>
+                                </div>
+                                <div className="ml-4">
+                                    <h4 className="font-semibold text-[var(--color-text-base)]">
+                                        Priya Patel
+                                    </h4>
+                                    <p className="text-[var(--color-text-muted)] text-sm">
+                                        Cultural Explorer
+                                    </p>
+                                </div>
+                            </div>
+                            <p className="text-[var(--color-text-muted)] italic leading-relaxed">
+                                "Connecting with local artisans was the
+                                highlight of my trip. The platform made it easy
+                                to support communities while experiencing
+                                authentic culture."
+                            </p>
+                            <div className="flex text-[var(--color-accent)] mt-4">
+                                <span>★★★★★</span>
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-8 rounded-2xl shadow-lg border border-stone-100 hover:shadow-xl transition-all duration-300">
+                            <div className="flex items-center mb-4">
+                                <div className="w-12 h-12 bg-[var(--color-primary-light)] rounded-full flex items-center justify-center">
+                                    <span className="text-[var(--color-primary-dark)] font-bold">
+                                        A
+                                    </span>
+                                </div>
+                                <div className="ml-4">
+                                    <h4 className="font-semibold text-[var(--color-text-base)]">
+                                        Arjun Singh
+                                    </h4>
+                                    <p className="text-[var(--color-text-muted)] text-sm">
+                                        Adventure Seeker
+                                    </p>
+                                </div>
+                            </div>
+                            <p className="text-[var(--color-text-muted)] italic leading-relaxed">
+                                "From trekking in Netarhat to exploring tribal
+                                villages, every moment was perfectly planned.
+                                The AI really understands what adventure lovers
+                                want!"
+                            </p>
+                            <div className="flex text-[var(--color-accent)] mt-4">
+                                <span>★★★★★</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -749,6 +887,14 @@ export default function Home() {
                                         Destinations
                                     </a>
                                 </li>
+                                <li>
+                                    <Link
+                                        to="/publicTourGuides"
+                                        className="hover:text-white transition-colors"
+                                    >
+                                        Tour Guides
+                                    </Link>
+                                </li>
                             </ul>
                         </div>
                         <div>
@@ -762,6 +908,14 @@ export default function Home() {
                                         className="hover:text-white transition-colors"
                                     >
                                         Admin Login
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        to="/tourist-registration"
+                                        className="hover:text-white transition-colors"
+                                    >
+                                        Tourist Registration
                                     </Link>
                                 </li>
                                 <li>

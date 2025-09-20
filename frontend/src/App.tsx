@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminTourGuide from "./Component/AdminTourGuide";
 import GuideList from "./Component/GuideList";
 import Login from "./pages/Login";
+import TourGuideRegistration from "./pages/TourGuideRegestration";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path='/adminTourGuide' element={<AdminTourGuide />} />
           <Route path="/publicTourGuides" element={<GuideList />} />
           <Route path="/admin" element={<Login />} />
+          <Route path="/tourGuideRegistration" element={<TourGuideRegistration />} />
         </Routes>
       </Router>
     </>
