@@ -301,7 +301,7 @@ export default function Home() {
                             </a>
                             <div className="flex items-center space-x-2 pl-4 border-l border-white/20">
                                 <Link
-                                    to="/tourGuideRegistration"
+                                    to="/publicTourGuides"
                                     className="text-white hover:text-[var(--color-primary-light)] transition-colors font-medium"
                                 >
                                     For Guides
