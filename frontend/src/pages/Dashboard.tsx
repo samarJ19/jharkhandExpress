@@ -371,7 +371,7 @@ const JharkhandTourismDashboard: React.FC = () => {
               <li><a href="#treasures" className="hover:text-teal-300 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10">Treasures</a></li>
               <li><a href="#destinations" className="hover:text-teal-300 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10">Destinations</a></li>
               <li><a href="#experiences" className="hover:text-teal-300 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-white hover:bg-opacity-10">Experiences</a></li>
-              <li><a href="#admin" className="bg-teal-500 hover:bg-teal-600 px-4 py-2 rounded-lg transition-colors duration-200">Admin Sign-In</a></li>
+              {/* <li><a href="#admin" className="bg-teal-500 hover:bg-teal-600 px-4 py-2 rounded-lg transition-colors duration-200">Admin Sign-In</a></li> */}
             </ul>
           </div>
         </div>

@@ -106,7 +106,7 @@ const Chatbot = () => {
                 }`}
             >
                 <iframe
-                    src="https://cdn.botpress.cloud/webchat/v3.2/shareable.html?configUrl=https://files.bpcontent.cloud/2025/09/20/05/20250920055748-BLE7GZDO.json"
+                    src="https://cdn.botpress.cloud/webchat/v3.2/shareable.html?configUrl=https://files.bpcontent.cloud/2025/09/20/05/20250920055748-BLE7GZDO.json "
                     className="w-full h-full border-none rounded-2xl shadow-2xl bg-white"
                     title="Jharkhand Express Chatbot"
                 ></iframe>
@@ -299,12 +299,18 @@ export default function Home() {
                             >
                                 Reviews
                             </a>
-                            <div className="flex items-center space-x-2 pl-4 border-l border-white/20">
+                            <div className="flex items-center space-x-6 pl-4 border-l border-white/20">
                                 <Link
-                                    to="/tourGuideRegistration"
+                                    to="/booking"
                                     className="text-white hover:text-[var(--color-primary-light)] transition-colors font-medium"
                                 >
-                                    For Guides
+                                    Book Hotels  
+                                </Link>
+                                <Link
+                                    to="/publicTourGuides"
+                                    className="text-white hover:text-[var(--color-primary-light)] transition-colors font-medium"
+                                >
+                                    Book Guides
                                 </Link>
                                 <Link
                                     to="/admin"
@@ -353,11 +359,18 @@ export default function Home() {
                                     Reviews
                                 </a>
                                 <Link
-                                    to="/guide-registration"
+                                    to="/booking"
                                     className="text-white hover:text-[var(--color-primary-light)] transition-colors font-medium border-t border-white/20 pt-3 mt-2"
                                     onClick={() => setIsMenuOpen(false)}
                                 >
-                                    For Guides
+                                    Book Hotels
+                                </Link>
+                                <Link
+                                    to="/publicTourGuides"
+                                    className="text-white hover:text-[var(--color-primary-light)] transition-colors font-medium border-t border-white/20 pt-3 mt-2"
+                                    onClick={() => setIsMenuOpen(false)}
+                                >
+                                    Book Guides
                                 </Link>
                                 <Link
                                     to="/admin"
@@ -693,7 +706,7 @@ export default function Home() {
                                 <Link to="/tourGuideRegistration">
                                     <button className="group bg-gradient-to-r from-[var(--color-primary-medium)] to-[var(--color-accent)] hover:from-[var(--color-accent)] hover:to-[var(--color-primary-medium)] text-white font-bold py-4 px-8 rounded-full text-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-xl flex items-center space-x-2">
                                         <Users className="w-5 h-5" />
-                                        <span>Register as Tourist</span>
+                                        <span>Register as Guide</span>
                                     </button>
                                 </Link>
                             </div>

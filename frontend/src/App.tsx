@@ -8,6 +8,7 @@ import AdminTourGuide from "./Component/AdminTourGuide";
 import GuideList from "./Component/GuideList";
 import Login from "./pages/Login";
 import TourGuideRegistration from "./pages/TourGuideRegestration";
+import Booking from "./pages/Booking";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/publicTourGuides" element={<GuideList />} />
           <Route path="/admin" element={<Login />} />
           <Route path="/tourGuideRegistration" element={<TourGuideRegistration />} />
+          <Route path="/booking" element={<Booking />} />
         </Routes>
       </Router>
     </>
