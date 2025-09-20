@@ -12,6 +12,8 @@ import {
     Loader,
     Search,
     ArrowRight,
+    AlertCircle,
+    X,
 } from "lucide-react";
 
 const TourGuideRegistration: React.FC = () => {
@@ -26,41 +28,150 @@ const TourGuideRegistration: React.FC = () => {
         "idle" | "pending" | "verified" | "rejected" | "notFound"
     >("idle");
     const [isChecking, setIsChecking] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // Form data state
+    const [formData, setFormData] = useState({
+        name: "",
+        email: "",
+        password: "",
+        walletAddress: ""
+    });
+    
+    // Dialog state
+    const [dialog, setDialog] = useState<{
+        show: boolean;
+        type: 'success' | 'error';
+        title: string;
+        message: string;
+    }>({
+        show: false,
+        type: 'success',
+        title: '',
+        message: ''
+    });
 
-    const handleRegisterSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        // Generate a mock registration ID
-        const newId = `TG-${Math.random()
-            .toString(36)
-            .substr(2, 9)
-            .toUpperCase()}`;
-        setGeneratedId(newId);
-        setIsSubmitted(true);
-
-        // Redirect home after a delay
-        setTimeout(() => {
-            navigate("/");
-        }, 5000);
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
     };
 
-    const handleStatusCheck = (e: React.FormEvent) => {
+    const showDialog = (type: 'success' | 'error', title: string, message: string) => {
+        setDialog({
+            show: true,
+            type,
+            title,
+            message
+        });
+    };
+
+    const closeDialog = () => {
+        setDialog(prev => ({ ...prev, show: false }));
+    };
+
+    const handleRegisterSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+
+        try {
+            const response = await fetch('http://localhost:5000/api/admin/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: formData.name,
+                    email: formData.email,
+                    password: formData.password,
+                    walletAddress: formData.walletAddress,
+                    role: "GUIDE" // GUIDE role from enum
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Success
+                setGeneratedId(data.user.id);
+                showDialog(
+                    'success',
+                    'Registration Successful!',
+                    `Your application has been submitted. Your ID is: ${data.user.id}`
+                );
+                setIsSubmitted(true);
+                
+                // Reset form
+                setFormData({
+                    name: "",
+                    email: "",
+                    password: "",
+                    walletAddress: ""
+                });
+
+                // Redirect home after a delay
+                setTimeout(() => {
+                    navigate("/");
+                }, 5000);
+            } else {
+                // Error from server
+                showDialog(
+                    'error',
+                    'Registration Failed',
+                    data.message || 'An error occurred during registration'
+                );
+            }
+        } catch (error) {
+            // Network or other error
+            showDialog(
+                'error',
+                'Connection Error',
+                'Unable to connect to the server. Please try again later.'
+            );
+            console.error('Registration error:', error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleStatusCheck = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsChecking(true);
         setVerificationStatus("idle");
 
-        // Mock API call
-        setTimeout(() => {
-            if (statusId === "TG-VERIFIED123") {
-                setVerificationStatus("verified");
-            } else if (statusId === "TG-REJECTED456") {
-                setVerificationStatus("rejected");
-            } else if (statusId.startsWith("TG-")) {
-                setVerificationStatus("pending");
+        try {
+            const response = await fetch(`http://localhost:5000/api/admin/guide/${statusId}/status`);
+            const data = await response.json();
+
+            if (response.ok) {
+                if (data.verified) {
+                    setVerificationStatus("verified");
+                } else {
+                    setVerificationStatus("pending");
+                }
             } else {
-                setVerificationStatus("notFound");
+                if (response.status === 404) {
+                    setVerificationStatus("notFound");
+                } else {
+                    showDialog(
+                        'error',
+                        'Status Check Failed',
+                        data.message || 'Unable to check status'
+                    );
+                }
             }
+        } catch (error) {
+            showDialog(
+                'error',
+                'Connection Error',
+                'Unable to connect to the server. Please try again later.'
+            );
+            console.error('Status check error:', error);
+        } finally {
             setIsChecking(false);
-        }, 1500);
+        }
     };
 
     const StatusResult = () => {
@@ -123,6 +234,46 @@ const TourGuideRegistration: React.FC = () => {
         }
     };
 
+    // Stylized Dialog Component
+    const StylizedDialog = () => {
+        if (!dialog.show) return null;
+
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md">
+                <div className="bg-slate-800 border border-sky-500/50 rounded-2xl p-8 text-center text-white shadow-2xl max-w-lg mx-4 relative">
+                    <button
+                        onClick={closeDialog}
+                        className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                    
+                    <div className="mb-4">
+                        {dialog.type === 'success' ? (
+                            <CheckCircle className="w-16 h-16 text-green-400 mx-auto" />
+                        ) : (
+                            <AlertCircle className="w-16 h-16 text-red-400 mx-auto" />
+                        )}
+                    </div>
+                    
+                    <h2 className="text-2xl font-bold mb-2">{dialog.title}</h2>
+                    <p className="text-slate-300 mb-6">{dialog.message}</p>
+                    
+                    <button
+                        onClick={closeDialog}
+                        className={`px-6 py-2 rounded-lg font-semibold transition-all duration-300 ${
+                            dialog.type === 'success'
+                                ? 'bg-green-500 hover:bg-green-600 text-white'
+                                : 'bg-red-500 hover:bg-red-600 text-white'
+                        }`}
+                    >
+                        Close
+                    </button>
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div
             className="min-h-screen bg-slate-900 flex items-center justify-center p-4"
@@ -133,6 +284,8 @@ const TourGuideRegistration: React.FC = () => {
             }}
         >
             <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm"></div>
+
+            <StylizedDialog />
 
             {isSubmitted && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 backdrop-blur-md">
@@ -218,9 +371,12 @@ const TourGuideRegistration: React.FC = () => {
                                             <UserPlus className="w-5 h-5 text-slate-400 absolute top-1/2 left-3 -translate-y-1/2" />
                                             <input
                                                 id="name"
+                                                name="name"
                                                 type="text"
                                                 placeholder="Your Name"
                                                 required
+                                                value={formData.name}
+                                                onChange={handleInputChange}
                                                 className="w-full bg-slate-800/50 border border-slate-600 rounded-lg py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-sky-500"
                                             />
                                         </div>
@@ -236,9 +392,12 @@ const TourGuideRegistration: React.FC = () => {
                                             <Mail className="w-5 h-5 text-slate-400 absolute top-1/2 left-3 -translate-y-1/2" />
                                             <input
                                                 id="email"
+                                                name="email"
                                                 type="email"
                                                 placeholder="you@email.com"
                                                 required
+                                                value={formData.email}
+                                                onChange={handleInputChange}
                                                 className="w-full bg-slate-800/50 border border-slate-600 rounded-lg py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-sky-500"
                                             />
                                         </div>
@@ -254,9 +413,12 @@ const TourGuideRegistration: React.FC = () => {
                                             <KeyRound className="w-5 h-5 text-slate-400 absolute top-1/2 left-3 -translate-y-1/2" />
                                             <input
                                                 id="password"
+                                                name="password"
                                                 type="password"
                                                 placeholder="••••••••"
                                                 required
+                                                value={formData.password}
+                                                onChange={handleInputChange}
                                                 className="w-full bg-slate-800/50 border border-slate-600 rounded-lg py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-sky-500"
                                             />
                                         </div>
@@ -272,9 +434,12 @@ const TourGuideRegistration: React.FC = () => {
                                             <Shield className="w-5 h-5 text-slate-400 absolute top-1/2 left-3 -translate-y-1/2" />
                                             <input
                                                 id="walletAddress"
+                                                name="walletAddress"
                                                 type="text"
                                                 placeholder="0x..."
                                                 required
+                                                value={formData.walletAddress}
+                                                onChange={handleInputChange}
                                                 className="w-full bg-slate-800/50 border border-slate-600 rounded-lg py-3 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-sky-500"
                                             />
                                         </div>
@@ -283,10 +448,20 @@ const TourGuideRegistration: React.FC = () => {
                                 <div className="pt-6">
                                     <button
                                         type="submit"
-                                        className="w-full group bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center"
+                                        disabled={isSubmitting}
+                                        className="w-full group bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        <span>Register Now</span>
-                                        <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                                        {isSubmitting ? (
+                                            <>
+                                                <Loader className="w-5 h-5 mr-2 animate-spin" />
+                                                <span>Registering...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span>Register Now</span>
+                                                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             </form>

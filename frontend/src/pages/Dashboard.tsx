@@ -1,7 +1,8 @@
 
 
-import React, { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, Users, DollarSign, Building2, Smartphone, AlertTriangle, Clock, FileText, RefreshCw, Star, MapPin, CheckCircle, XCircle, Pause, Activity, ThumbsUp, MessageSquare, Camera, Download, Calendar, Archive, Search, Bell, Settings } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { BarChart3, TrendingUp, Users, DollarSign, Building2, Smartphone, AlertTriangle, RefreshCw, Star, MapPin, ThumbsUp, MessageSquare, Camera, Download, Search, Bell, Settings, FileText, Activity } from 'lucide-react';
 
 interface StatCardData {
   icon: React.ReactNode;
@@ -18,16 +19,6 @@ interface AlertData {
   description: string;
   time: string;
   priority: 'high' | 'medium' | 'low';
-}
-
-interface GuideData {
-  id: string;
-  name: string;
-  experience: string;
-  location: string;
-  rating: number;
-  status: 'verified' | 'pending' | 'rejected';
-  reviews: number;
 }
 
 interface SentimentData {
@@ -48,25 +39,7 @@ interface ReviewData {
 }
 
 const JharkhandTourismDashboard: React.FC = () => {
-  const [activeSection, setActiveSection] = useState<'tourism-stats' | 'sentiment-analysis' | 'guide-verification'>('tourism-stats');
-  const [currentTime, setCurrentTime] = useState<string>('');
-
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setCurrentTime(now.toLocaleString('en-IN', {
-        month: 'short',
-        day: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }));
-    };
-
-    updateTime();
-    const interval = setInterval(updateTime, 60000);
-    return () => clearInterval(interval);
-  }, []);
+  const [activeSection, setActiveSection] = useState<'tourism-stats' | 'sentiment-analysis'>('tourism-stats');
 
   const statsData: StatCardData[] = [
     {
@@ -115,45 +88,6 @@ const JharkhandTourismDashboard: React.FC = () => {
       description: 'Deoghar temple complex approaching weekend capacity limits',
       time: '4h ago',
       priority: 'medium'
-    }
-  ];
-
-  const guidesData: GuideData[] = [
-    {
-      id: '1',
-      name: 'Rajesh Kumar',
-      experience: '8 years',
-      location: 'Deoghar',
-      rating: 4.8,
-      status: 'verified',
-      reviews: 245
-    },
-    {
-      id: '2',
-      name: 'Priya Singh',
-      experience: '5 years',
-      location: 'Netarhat',
-      rating: 4.6,
-      status: 'pending',
-      reviews: 189
-    },
-    {
-      id: '3',
-      name: 'Amit Sharma',
-      experience: '3 years',
-      location: 'Hundru Falls',
-      rating: 4.2,
-      status: 'rejected',
-      reviews: 67
-    },
-    {
-      id: '4',
-      name: 'Sunita Devi',
-      experience: '6 years',
-      location: 'Betla National Park',
-      rating: 4.9,
-      status: 'verified',
-      reviews: 312
     }
   ];
 
@@ -276,53 +210,6 @@ const JharkhandTourismDashboard: React.FC = () => {
     </div>
   );
 
-  const renderGuideCard = (guide: GuideData) => {
-    const getStatusIcon = () => {
-      switch (guide.status) {
-        case 'verified': return <CheckCircle className="w-5 h-5 text-green-500" />;
-        case 'pending': return <Pause className="w-5 h-5 text-orange-500" />;
-        case 'rejected': return <XCircle className="w-5 h-5 text-red-500" />;
-      }
-    };
-
-    const getStatusBadgeClass = () => {
-      switch (guide.status) {
-        case 'verified': return 'bg-green-100 text-green-700';
-        case 'pending': return 'bg-orange-100 text-orange-700';
-        case 'rejected': return 'bg-red-100 text-red-700';
-      }
-    };
-
-    return (
-      <div key={guide.id} className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-teal-400 to-cyan-400 flex items-center justify-center text-white font-bold text-lg">
-            {guide.name.charAt(0)}
-          </div>
-          <div className="flex-1">
-            <div className="font-semibold text-gray-800 text-lg">{guide.name}</div>
-            <div className="text-sm text-gray-600">{guide.experience} experience</div>
-          </div>
-          <div className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${getStatusBadgeClass()}`}>
-            {getStatusIcon()}
-            {guide.status.charAt(0).toUpperCase() + guide.status.slice(1)}
-          </div>
-        </div>
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-gray-500" />
-            <span className="text-sm text-gray-600">{guide.location}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-            <span className="text-sm font-medium">{guide.rating}</span>
-            <span className="text-sm text-gray-500">({guide.reviews} reviews)</span>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   const renderReviewCard = (review: ReviewData) => (
     <div key={review.id} className="bg-white rounded-xl p-5 shadow-md hover:shadow-lg transition-all duration-300">
       <div className="flex items-center justify-between mb-3">
@@ -416,7 +303,15 @@ const JharkhandTourismDashboard: React.FC = () => {
         <div className="bg-white rounded-2xl p-2 shadow-lg mt-6 flex gap-2">
           {renderNavButton('tourism-stats', '📊', 'Tourism Statistics')}
           {renderNavButton('sentiment-analysis', '💭', 'Sentiment Analysis')}
-          {renderNavButton('guide-verification', '✅', 'Guide Verification')}
+          <Link 
+            to="/adminTourGuide"
+            className="flex-1 px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-300 transform hover:scale-105 bg-white text-gray-600 hover:bg-gray-50 hover:text-teal-600"
+          >
+            <span className="flex items-center justify-center gap-2">
+              <span className="text-lg">✅</span>
+              Guide Verification
+            </span>
+          </Link>
         </div>
 
         {/* Tourism Statistics Section */}
@@ -700,116 +595,6 @@ const JharkhandTourismDashboard: React.FC = () => {
                     </div>
                   </div>
                   <span className="text-sm text-gray-600 w-12 font-semibold">7.2/10</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Guide Verification Section */}
-        {activeSection === 'guide-verification' && (
-          <div className="mt-8 space-y-8 animate-fade-in">
-            {/* Verification Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-green-400 to-emerald-400 text-white shadow-lg">
-                    <CheckCircle className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-gray-800">147</div>
-                    <div className="text-sm text-gray-600">Verified Guides</div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-orange-400 to-yellow-400 text-white shadow-lg">
-                    <Pause className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-gray-800">23</div>
-                    <div className="text-sm text-gray-600">Pending Review</div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-red-400 to-pink-400 text-white shadow-lg">
-                    <XCircle className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-gray-800">8</div>
-                    <div className="text-sm text-gray-600">Rejected</div>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-400 text-white shadow-lg">
-                    <Users className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-gray-800">178</div>
-                    <div className="text-sm text-gray-600">Total Applications</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Guide Management */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <Users className="w-6 h-6 text-blue-500" />
-                  <h3 className="text-xl font-semibold text-gray-800">Guide Management System</h3>
-                </div>
-                <div className="flex gap-3">
-                  <button className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:from-green-600 hover:to-emerald-600 transition-all duration-300 flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4" />
-                    Bulk Approve
-                  </button>
-                  <button className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 flex items-center gap-2">
-                    <Archive className="w-4 h-4" />
-                    Export Data
-                  </button>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {guidesData.map(renderGuideCard)}
-              </div>
-            </div>
-
-            {/* Verification Process */}
-            <div className="bg-white rounded-2xl p-6 shadow-lg">
-              <div className="flex items-center gap-3 mb-6">
-                <FileText className="w-6 h-6 text-purple-500" />
-                <h3 className="text-xl font-semibold text-gray-800">Verification Process Status</h3>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center gap-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                  <CheckCircle className="w-6 h-6 text-green-500" />
-                  <div className="flex-1">
-                    <div className="font-semibold text-gray-800">Document Verification</div>
-                    <div className="text-sm text-gray-600">All submitted documents verified and approved</div>
-                  </div>
-                  <span className="bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium">Complete</span>
-                </div>
-                <div className="flex items-center gap-4 p-4 bg-orange-50 rounded-lg border border-orange-200">
-                  <Clock className="w-6 h-6 text-orange-500" />
-                  <div className="flex-1">
-                    <div className="font-semibold text-gray-800">Background Check</div>
-                    <div className="text-sm text-gray-600">Police verification and character certificate review</div>
-                  </div>
-                  <span className="bg-orange-500 text-white px-3 py-1 rounded-full text-xs font-medium">In Progress</span>
-                </div>
-                <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <Calendar className="w-6 h-6 text-blue-500" />
-                  <div className="flex-1">
-                    <div className="font-semibold text-gray-800">Skill Assessment</div>
-                    <div className="text-sm text-gray-600">Practical and theoretical examination pending</div>
-                  </div>
-                  <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-medium">Scheduled</span>
                 </div>
               </div>
             </div>
