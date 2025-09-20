@@ -176,7 +176,9 @@ app.get('/api/google-place-search', async (req, res) => {
   const headers = {
     'Content-Type': 'application/json',
     'X-Goog-Api-Key': apiKey,
-    'X-Goog-FieldMask': 'places.id,places.displayName,places.photos,places.formattedAddress,places.location'
+    'X-Goog-FieldMask': 'places.id,places.displayName,places.photos,places.formattedAddress,places.location',
+    'Referer': 'http://localhost:5173', // Add referer header to match your API key restrictions
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
   };
 
   try {
@@ -213,6 +215,69 @@ app.get('/api/google-place-search', async (req, res) => {
       error: 'Failed to fetch data from Google Places API',
       details: error.response?.data || error.message
     });
+  }
+});
+
+// Proxy endpoint for Google Photos - serves images directly without exposing API key
+app.get('/api/google-photo/:photoReference', async (req: Request, res: Response) => {
+  const { photoReference } = req.params;
+  const { maxwidth = '400' } = req.query;
+
+  if (!photoReference) {
+    return res.status(400).json({ error: 'Photo reference is required' });
+  }
+
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'API key is not configured on the server' });
+  }
+
+  // Construct the Google Photos API URL
+  const photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxwidth}&photoreference=${photoReference}&key=${apiKey}`;
+
+  try {
+    // Fetch the image from Google
+    const response = await axios.get(photoUrl, {
+      responseType: 'stream',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Referer': 'http://localhost:5173' // Add referer header to match your API key restrictions
+      }
+    });
+
+    // Set appropriate headers for image response
+    const contentType = response.headers['content-type'] || 'image/jpeg';
+    const contentLength = response.headers['content-length'];
+    
+    res.setHeader('Content-Type', contentType);
+    if (contentLength) {
+      res.setHeader('Content-Length', contentLength);
+    }
+    
+    // Add caching headers to improve performance
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+    res.setHeader('ETag', `"${photoReference}-${maxwidth}"`);
+    
+    // Stream the image data directly to the client
+    response.data.pipe(res);
+    
+    response.data.on('error', (error: any) => {
+      console.error('Error streaming photo:', error);
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to stream photo' });
+      }
+    });
+
+  } catch (error: any) {
+    console.error('Error fetching photo from Google:', error.response?.data || error.message);
+    
+    if (error.response?.status === 400) {
+      res.status(400).json({ error: 'Invalid photo reference' });
+    } else if (error.response?.status === 403) {
+      res.status(403).json({ error: 'Photo access forbidden' });
+    } else {
+      res.status(500).json({ error: 'Failed to fetch photo from Google Photos API' });
+    }
   }
 });
 
