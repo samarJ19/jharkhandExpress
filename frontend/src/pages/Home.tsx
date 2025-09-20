@@ -9,10 +9,10 @@ import {
     ChevronRight,
     Menu,
     X,
-    Palette,
-    MapPin,
+    // Palette,    
     Star,
     Users,
+    MessageSquare,
 } from "lucide-react";
 
 // --- THEME DATA AND TYPES ---
@@ -83,10 +83,42 @@ const MarketIcon = () => (
     />
 );
 
+const Chatbot = () => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <>
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="fixed bottom-6 right-6 z-50 bg-[var(--color-primary-medium)] text-white p-4 rounded-full shadow-lg transition-all duration-300 ease-in-out transform hover:scale-110 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-teal-500"
+                aria-label="Toggle Chatbot"
+            >
+                {isOpen ? (
+                    <X className="w-8 h-8" />
+                ) : (
+                    <MessageSquare className="w-6 h-6" />
+                )}
+            </button>
+
+            <div
+                className={`fixed bottom-24 right-6 z-40 w-[400px] h-[600px] transition-transform duration-500 ease-in-out ${
+                    isOpen ? "translate-x-0" : "translate-x-[450px]"
+                }`}
+            >
+                <iframe
+                    src="https://cdn.botpress.cloud/webchat/v3.2/shareable.html?configUrl=https://files.bpcontent.cloud/2025/09/20/05/20250920055748-BLE7GZDO.json"
+                    className="w-full h-full border-none rounded-2xl shadow-2xl bg-white"
+                    title="Jharkhand Express Chatbot"
+                ></iframe>
+            </div>
+        </>
+    );
+};
+
 export default function Home() {
     const navigate = useNavigate();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [theme, setTheme] = useState("forest");
+    // const [theme, setTheme] = useState("forest");
 
     // Typing animation state
     const [text, setText] = useState("");
@@ -97,8 +129,8 @@ export default function Home() {
     const [currentSlide, setCurrentSlide] = useState(0);
     const backgroundImages = [
         "/Homepageback.jpg",
-        "https://images.unsplash.com/photo-1593693397649-65d2a6d7d89c?w=1920&q=80",
-        "https://images.unsplash.com/photo-1599422478953-53f78a7c2e9a?w=1920&q=80",
+        "/Homepageback3.jpeg",
+        "/Homepageback2.jpg",
     ];
 
     const wordsToRotate = [
@@ -210,97 +242,34 @@ export default function Home() {
 
     const handleStartExploring = () => navigate("/chat");
 
-    const ThemeSwitcher = () => {
-        const cycleTheme = () => {
-            const themeNames = Object.keys(themes);
-            const currentThemeIndex = themeNames.indexOf(theme);
-            const nextThemeIndex = (currentThemeIndex + 1) % themeNames.length;
-            setTheme(themeNames[nextThemeIndex]);
-        };
-        return (
-            <button
-                onClick={cycleTheme}
-                className="fixed bottom-5 right-5 z-50 bg-[var(--color-primary-medium)] text-[var(--color-text-inverted)] p-3 rounded-full shadow-lg transition-all duration-300 ease-in-out hover:bg-[var(--color-primary-dark)] hover:scale-110 active:scale-95"
-                aria-label="Switch color theme"
-            >
-                <Palette />
-            </button>
-        );
-    };
-
-    // User reviews data
-    const userReviews = [
-        {
-            id: 1,
-            name: "Anita Kumari",
-            location: "Mumbai",
-            rating: 5,
-            comment:
-                "Absolutely amazing experience! The hidden gems I discovered through this platform made my Jharkhand trip unforgettable. The tribal handicrafts I bought directly supported local artisans.",
-            avatar: "A",
-        },
-        {
-            id: 2,
-            name: "Vikash Singh",
-            location: "Delhi",
-            rating: 5,
-            comment:
-                "The AI recommendations were spot-on! Found the most beautiful waterfalls and stayed in authentic tribal homestays. This is the future of travel planning!",
-            avatar: "V",
-        },
-        {
-            id: 3,
-            name: "Shreya Patel",
-            location: "Bangalore",
-            rating: 4,
-            comment:
-                "Loved the cultural immersion aspect. Meeting local artisans and learning about their crafts was the highlight of my journey. Highly recommend for culture enthusiasts!",
-            avatar: "S",
-        },
-        {
-            id: 4,
-            name: "Ravi Kumar",
-            location: "Kolkata",
-            rating: 5,
-            comment:
-                "As a photographer, I was blown away by the scenic locations recommended by the AI. Captured some of my best shots at Netarhat and Patratu Valley!",
-            avatar: "R",
-        },
-        {
-            id: 5,
-            name: "Meera Gupta",
-            location: "Pune",
-            rating: 5,
-            comment:
-                "The platform made it so easy to connect with local communities. The homestay experience was authentic and the food was incredible. Will definitely visit again!",
-            avatar: "M",
-        },
-        {
-            id: 6,
-            name: "Ajay Sharma",
-            location: "Jaipur",
-            rating: 4,
-            comment:
-                "Great platform for adventure seekers! The trekking routes and nature trails were perfectly planned. The local guides were knowledgeable and friendly.",
-            avatar: "A",
-        },
-    ];
+    // const ThemeSwitcher = () => {
+    //     const cycleTheme = () => {
+    //         const themeNames = Object.keys(themes);
+    //         const currentThemeIndex = themeNames.indexOf(theme);
+    //         const nextThemeIndex = (currentThemeIndex + 1) % themeNames.length;
+    //         setTheme(themeNames[nextThemeIndex]);
+    //     };
+    //     return (
+    //         <button
+    //             onClick={cycleTheme}
+    //             className="fixed bottom-5 right-5 z-50 bg-[var(--color-primary-medium)] text-[var(--color-text-inverted)] p-3 rounded-full shadow-lg transition-all duration-300 ease-in-out hover:bg-[var(--color-primary-dark)] hover:scale-110 active:scale-95"
+    //             aria-label="Switch color theme"
+    //         >
+    //             <Palette />
+    //         </button>
+    //     );
+    // };
 
     return (
         <div
-            style={themes[theme] as React.CSSProperties}
+            style={themes["forest"] as React.CSSProperties}
             className="bg-[var(--color-background)] font-serif"
         >
-            <ThemeSwitcher />
+            {/* <ThemeSwitcher /> */}
             <header className="absolute top-0 left-0 w-full z-50 transition-all duration-300">
                 <div className="container mx-auto px-6 py-4">
                     <div className="flex justify-between items-center">
                         <Link to="/" className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-primary-light)] to-[var(--color-primary-medium)] rounded-full flex items-center justify-center">
-                                <span className="text-[var(--color-primary-darker)] font-bold text-lg">
-                                    J
-                                </span>
-                            </div>
                             <h1 className="text-2xl font-bold text-white tracking-wide">
                                 Jharkhand Express
                             </h1>
@@ -404,16 +373,18 @@ export default function Home() {
             </header>
 
             <section className="relative h-screen flex items-center justify-center text-white overflow-hidden">
-                {backgroundImages.map((img, index) => (
-                    <div
-                        key={img}
-                        className="absolute inset-0 w-full h-full bg-cover bg-center transition-opacity duration-1000 ease-in-out"
-                        style={{
-                            backgroundImage: `url(${img})`,
-                            opacity: index === currentSlide ? 1 : 0,
-                        }}
-                    />
-                ))}
+                <div
+                    className="absolute inset-0 w-full h-full flex transition-transform duration-1000 ease-in-out"
+                    style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+                >
+                    {backgroundImages.map((img) => (
+                        <div
+                            key={img}
+                            className="w-full h-full flex-shrink-0 bg-cover bg-center"
+                            style={{ backgroundImage: `url(${img})` }}
+                        />
+                    ))}
+                </div>
                 <div className="absolute inset-0 bg-black/60"></div>
 
                 <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
@@ -960,6 +931,7 @@ export default function Home() {
                     </div>
                 </div>
             </footer>
+            <Chatbot></Chatbot>
         </div>
     );
 }
