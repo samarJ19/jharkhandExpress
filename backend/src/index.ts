@@ -264,21 +264,41 @@ app.get('/api/google-photo/:photoReference', async (req: Request, res: Response)
     response.data.on('error', (error: any) => {
       console.error('Error streaming photo:', error);
       if (!res.headersSent) {
-        res.status(500).json({ error: 'Failed to stream photo' });
+        // Return a redirect to a placeholder image instead of an error
+        res.redirect('/api/placeholder-image');
       }
     });
 
   } catch (error: any) {
     console.error('Error fetching photo from Google:', error.response?.data || error.message);
     
-    if (error.response?.status === 400) {
-      res.status(400).json({ error: 'Invalid photo reference' });
-    } else if (error.response?.status === 403) {
-      res.status(403).json({ error: 'Photo access forbidden' });
-    } else {
-      res.status(500).json({ error: 'Failed to fetch photo from Google Photos API' });
-    }
+    // Instead of returning JSON error (which causes ORB), redirect to placeholder
+    res.redirect('/api/placeholder-image');
   }
+});
+
+// Endpoint to serve a random Jharkhand placeholder image
+app.get('/api/placeholder-image', (req: Request, res: Response) => {
+  // Array of available Jharkhand images
+  const jharkhandImages = [
+    'Baidyanath Dham.jpg',
+    'Betla National Park.jpg',
+    'dassam falls.jpg',
+    'hundru.jpg',
+    'Jagannath Temple.jpg',
+    'jharkhandIntro.jpeg',
+    'Jonha Falls.jpg',
+    'Netarhat Jharkhand.jpg',
+    'Parasnath Hill.jpg',
+    'Patratu.jpg'
+  ];
+  
+  // Select a random image
+  const randomImage = jharkhandImages[Math.floor(Math.random() * jharkhandImages.length)];
+  const imagePath = `http://localhost:5173/${randomImage}`;
+  
+  // Redirect to the frontend static image
+  res.redirect(imagePath);
 });
 
 

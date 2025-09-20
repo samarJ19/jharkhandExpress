@@ -28,6 +28,20 @@ const LocationCard: React.FC<LocationCardProps> = ({
   const [isLiked, setIsLiked] = React.useState(false);
   const isVerified = React.useMemo(() => Math.random() > 0.3, [location.place]); // Randomly verified
 
+  // Jharkhand fallback images
+  const jharkhandImages = React.useMemo(() => [
+    '/Baidyanath Dham.jpg',
+    '/Betla National Park.jpg',
+    '/dassam falls.jpg',
+    '/hundru.jpg',
+    '/Jagannath Temple.jpg',
+    '/jharkhandIntro.jpeg',
+    '/Jonha Falls.jpg',
+    '/Netarhat Jharkhand.jpg',
+    '/Parasnath Hill.jpg',
+    '/Patratu.jpg'
+  ], []);
+
 
   useEffect(() => {
     setIsLoading(true);
@@ -36,7 +50,6 @@ const LocationCard: React.FC<LocationCardProps> = ({
     setCurrentImageIndex(0);
 
     const fetchPlacePhotos = async () => {
-      // --- START OF CHANGES ---
       try {
         // 1. Point to your own backend endpoint
         const backendUrl = 'http://localhost:5000/api/google-place-search';
@@ -52,7 +65,7 @@ const LocationCard: React.FC<LocationCardProps> = ({
 
         const candidate = response.data.candidates?.[0];
 
-        if (candidate && candidate.photos) {
+        if (candidate && candidate.photos && candidate.photos.length > 0) {
           // Use the backend proxy endpoint for photos instead of direct Google API calls
           const photoUrls = candidate.photos.slice(0, 5).map((photo: any) => {
             const photoReference = photo.photo_reference;
@@ -63,21 +76,37 @@ const LocationCard: React.FC<LocationCardProps> = ({
             return null;
           }).filter(Boolean); // Remove any null URLs
           
-          setImages(photoUrls);
+          if (photoUrls.length > 0) {
+            setImages(photoUrls);
+          } else {
+            // No valid photo URLs, use Jharkhand fallbacks
+            const randomJharkhandImages = jharkhandImages
+              .sort(() => 0.5 - Math.random())
+              .slice(0, 3);
+            setImages(randomJharkhandImages);
+          }
         } else {
-          setImages([]);
+          // No photos found, use Jharkhand fallbacks
+          const randomJharkhandImages = jharkhandImages
+            .sort(() => 0.5 - Math.random())
+            .slice(0, 3);
+          setImages(randomJharkhandImages);
         }
       } catch (err) {
         console.error("Error fetching place data from backend:", err);
-        setError("Could not load location images.");
+        setError("Using local images");
+        // On error, use Jharkhand fallback images
+        const randomJharkhandImages = jharkhandImages
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 3);
+        setImages(randomJharkhandImages);
       } finally {
         setIsLoading(false);
       }
-      // --- END OF CHANGES ---
     };
 
     fetchPlacePhotos();
-}, [location]);
+}, [location, jharkhandImages]);
 
 
   // --- Carousel Navigation ---
@@ -89,6 +118,19 @@ const LocationCard: React.FC<LocationCardProps> = ({
   const prevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
     setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  // Handle individual image load errors
+  const handleImageError = (index: number) => {
+    if (images[index].startsWith('http://localhost:5000')) {
+      // If it's a Google proxy URL that failed, replace with Jharkhand image
+      const randomJharkhandImage = jharkhandImages[Math.floor(Math.random() * jharkhandImages.length)];
+      setImages(prev => {
+        const newImages = [...prev];
+        newImages[index] = randomJharkhandImage;
+        return newImages;
+      });
+    }
   };
   
   // --- Mock Data for non-image fields (can be replaced with more API calls) ---
@@ -127,6 +169,7 @@ const LocationCard: React.FC<LocationCardProps> = ({
               src={images[currentImageIndex]}
               alt={location.place}
               className="w-full h-full object-cover transition-opacity duration-300"
+              onError={() => handleImageError(currentImageIndex)}
             />
             {images.length > 1 && (
               <>
