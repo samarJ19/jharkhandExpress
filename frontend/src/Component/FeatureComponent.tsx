@@ -9,27 +9,27 @@ const FeatureComponent: React.FC<FeatureComponentProps> = ({ onFeatureClick }) =
   const forYouItems = [
     {
       id: 1,
-      title: "Sarafa Night Food Market",
-      type: "Indian",
+      title: "Jagannath Temple",
+      type: "Temple",
       icon: <Utensils className="w-4 h-4" />,
-      image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=300&h=200&fit=crop",
-      category: "Food"
+      image: "https://images.unsplash.com/photo-1714459481307-f45bf179435d?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      category: "Temple"
     },
     {
       id: 2,
-      title: "Hotel O The Dreams",
-      type: "Hotel",
+      title: "Ranchi Lake",
+      type: "Lake",
       icon: <Bed className="w-4 h-4" />,
-      image: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=300&h=200&fit=crop",
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTepqO92MXP9YJn1sBxs_DlVDxkJCbYBQU9BQ&s",
       category: "Stay"
     },
     {
       id: 3,
-      title: "Little Monk-Fine Dine Restaurant",
-      type: "Indian",
+      title: "Sun Temple",
+      type: "Temple",
       icon: <Utensils className="w-4 h-4" />,
-      image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=300&h=200&fit=crop",
-      category: "Food"
+      image: "https://images.unsplash.com/photo-1690313186501-445a6367d7e7?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      category: "Temple"
     }
   ];
 
@@ -60,23 +60,23 @@ const FeatureComponent: React.FC<FeatureComponentProps> = ({ onFeatureClick }) =
   const inspirationItems = [
     {
       id: 1,
-      title: "Indore & Ujjain- India",
-      author: "Travel Expert",
-      image: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=300&h=200&fit=crop",
+      title: "Chasing Waterfalls:",
+      author: "Nature & Adventure",
+      image: "https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcTx710375Ho3KqoOd9GbNmtqxX6E2QqlPBN1mP_1dBwStAE_WyBytbURxhNkiTh",
       type: "destination"
     },
     {
       id: 2,
-      title: "Top 10 Restaurants in Auckland",
-      author: "Food Critic",
-      image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=300&h=200&fit=crop",
+      title: "The Painted Villages:",
+      author: "Hidden Gems & History",
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZjEGc0thER1zETzK6FhShnuRdHHniQtnnucakOOvQTcfG_91WJpSNjtE39gmN",
       type: "food"
     },
     {
       id: 3,
-      title: "20 Things to Do with Teens in...",
-      author: "Family Traveler",
-      image: "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=300&h=200&fit=crop",
+      title: "Ranchi's Top 10:",
+      author: "Food & Culture",
+      image: "https://assets.cntraveller.in/photos/656094b7b1b23f6efc757456/16:9/w_1024%2Cc_limit/IMG_6472.jpeg",
       type: "activities"
     }
   ];
@@ -117,7 +117,7 @@ const FeatureComponent: React.FC<FeatureComponentProps> = ({ onFeatureClick }) =
               <h3 className="text-2xl font-bold text-gray-900">For you in</h3>
               <div className="flex items-center space-x-2 text-gray-700">
                 <MapPin className="w-5 h-5" />
-                <span className="font-medium">Indore</span>
+                <span className="font-medium">Ranchi</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Map className="w-5 h-5 text-gray-500" />
