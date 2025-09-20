@@ -53,20 +53,15 @@ const LocationCard: React.FC<LocationCardProps> = ({
         const candidate = response.data.candidates?.[0];
 
         if (candidate && candidate.photos) {
-          // For the NEW Places API, photos are returned with different structure
-          // We need to use the Place Photo (New) API format
-          const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY; // Key still needed for photo URLs
+          // Use the backend proxy endpoint for photos instead of direct Google API calls
           const photoUrls = candidate.photos.slice(0, 5).map((photo: any) => {
-            // New API format: use the photo name directly in the new photo API
             const photoReference = photo.photo_reference;
             if (photoReference) {
-              // Still use the old photo API URL for compatibility
-              return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photoReference}&key=${apiKey}`;
-            } else {
-              // If using new photo structure, construct the new photo URL
-              return `https://places.googleapis.com/v1/${photo.name || `places/${candidate.place_id}/photos/${photoReference}`}/media?maxWidthPx=400&key=${apiKey}`;
+              // Use our backend proxy endpoint that handles the API key securely
+              return `http://localhost:5000/api/google-photo/${photoReference}?maxwidth=400`;
             }
-          }).filter(Boolean); // Remove any undefined URLs
+            return null;
+          }).filter(Boolean); // Remove any null URLs
           
           setImages(photoUrls);
         } else {
