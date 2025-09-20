@@ -4,6 +4,8 @@ import Chatbot from "./pages/ChatBot";
 import JharkhandTreasuresPage from "./pages/JharkhandTreasure";
 import StreetViewMap from "./pages/StreetView";
 import Dashboard from "./pages/Dashboard";
+import AdminTourGuide from "./Component/AdminTourGuide";
+import GuideList from "./Component/GuideList";
 import Login from "./pages/Login";
 
 function App() {
@@ -19,6 +21,8 @@ function App() {
           />
           <Route path="/street-view" element={<StreetViewMap />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path='/adminTourGuide' element={<AdminTourGuide />} />
+          <Route path="/publicTourGuides" element={<GuideList />} />
           <Route path="/admin" element={<Login />} />
         </Routes>
       </Router>
